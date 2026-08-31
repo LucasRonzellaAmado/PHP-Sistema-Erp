@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_atualizar'])) {
         qtd_fornecedor='".(float)($d['qtd_fornecedor'] ?: 0)."', ncm='{$d['ncm']}', cfop='{$d['cfop']}', 
         subcategoria='{$d['subcategoria']}', marca='{$d['marca']}', modelo='{$d['modelo']}',
         preco_venda_minimo='".(float)($d['preco_venda_minimo'] ?: 0)."', cst_csosn='{$d['cst_csosn']}', 
-        origem_produto='{$d['origem_produto']}', pis_aliquota='".(float)($d['pis_aliquota'] ?: 0)."',
+        origem_produto='".(int)($d['origem_produto'] ?: 0)."', pis_aliquota='".(float)($d['pis_aliquota'] ?: 0)."',
         cofins_aliquota='".(float)($d['cofins_aliquota'] ?: 0)."', ponto_reposicao='".(float)($d['ponto_reposicao'] ?: 0)."', 
         data_validade='{$d['data_validade']}', lote='{$d['lote']}'
         WHERE id = $id";
@@ -86,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_atualizar'])) {
                     <div><label>PREÇO CUSTO</label><input type="number" step="0.01" name="preco_custo" class="input-erp" value="<?= (float)($dados['preco_custo'] ?? 0) ?>" onfocus="this.select()"></div>
                     <div><label>PREÇO VENDA</label><input type="number" step="0.01" name="preco_venda" class="input-erp" value="<?= (float)($dados['preco_venda'] ?? 0) ?>" onfocus="this.select()"></div>
                     <div><label>QUANTIDADE ATUAL</label><input type="number" step="0.01" name="quantidade" class="input-erp" value="<?= (float)($dados['quantidade'] ?? 0) ?>" onfocus="this.select()"></div>
+                    <div><label>UNIDADE</label><select name="unidade" class="input-erp"><option value="KG" <?= ($dados["unidade"] ?? "") === "KG" ? "selected" : "" ?>>KG</option><option value="PEÇA" <?= ($dados["unidade"] ?? "") === "PEÇA" ? "selected" : "" ?>>PEÇA</option><option value="ROLO" <?= ($dados["unidade"] ?? "") === "ROLO" ? "selected" : "" ?>>ROLO</option></select></div>
+                    <div><label>STATUS</label><select name="status" class="input-erp"><option value="ATIVO" <?= ($dados["status"] ?? "") === "ATIVO" ? "selected" : "" ?>>ATIVO</option><option value="INATIVO" <?= ($dados["status"] ?? "") === "INATIVO" ? "selected" : "" ?>>INATIVO</option></select></div>
                     
                     <div class="section-title">3. Informações Fiscais (NCM/CFOP/IPI)</div>
                     <div><label>NCM</label><input type="text" name="ncm" class="input-erp" value="<?= htmlspecialchars($dados['ncm'] ?? '') ?>"></div>

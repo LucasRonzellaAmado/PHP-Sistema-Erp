@@ -26,7 +26,7 @@ if (!isset($_SESSION['caixa_aberto']) || $_SESSION['caixa_aberto'] === false) {
                     }
                 });
             }
-        <\/script>
+        </script>
     </body>
     </html>";
     exit;
@@ -116,6 +116,11 @@ $res_produtos = $mysql->query($sql_produtos);
                 </section>
 
                 <section class="card-erp">
+                    <label class="label-tiny">LEITOR DE CÓDIGO DE BARRAS</label>
+                    <div class="produto-input-group">
+                        <input type="text" id="input_codigo_barras" placeholder="Aponte o leitor aqui e escaneie..." style="width: 100%" autocomplete="off">
+                    </div>
+
                     <label class="label-tiny">2. ADICIONAR ITENS (BUSQUE POR ID OU NOME)</label>
                     <div class="produto-input-group">
                         <select id="select_produto" style="width: 100%">

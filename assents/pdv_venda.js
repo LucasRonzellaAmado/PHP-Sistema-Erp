@@ -131,7 +131,7 @@ function finalizarVendaPDV() {
         }
     };
 
-    fetch('/erp/action/processa_venda.php', { 
+    fetch('action/processa_venda.php', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dados)
@@ -142,6 +142,7 @@ function finalizarVendaPDV() {
     })
     .then(data => {
         if (data.sucesso) {
+            imprimirCupomSilencioso(data.venda_id);
             Swal.fire('Sucesso!', 'Venda finalizada.', 'success').then(() => location.reload());
         } else {
             Swal.fire('Erro', data.mensagem || 'Erro ao processar', 'error');
@@ -151,4 +152,92 @@ function finalizarVendaPDV() {
         console.error('Erro detalhado:', error);
         Swal.fire('Erro Crítico', 'Não foi possível falar com o servidor. Verifique o arquivo processa_venda.php', 'error');
     });
+}
+function imprimirCupomSilencioso(vendaId) {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = 'imprimir_cupom.php?id=' + vendaId;
+    document.body.appendChild(iframe);
+
+    iframe.onload = function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(function() {
+            document.body.removeChild(iframe);
+        }, 1000);
+    };
+}
+
+// ===== LEITOR DE CÓDIGO DE BARRAS =====
+document.addEventListener('DOMContentLoaded', function() {
+    const inputCodigo = document.getElementById('input_codigo_barras');
+    if (!inputCodigo) return;
+
+    inputCodigo.focus();
+
+    inputCodigo.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const codigo = inputCodigo.value.trim();
+            inputCodigo.value = '';
+            if (codigo) {
+                buscarProdutoPorCodigoBarras(codigo);
+            }
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        const tag = e.target.tagName;
+        if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') {
+            inputCodigo.focus();
+        }
+    });
+});
+
+function buscarProdutoPorCodigoBarras(codigo) {
+    fetch('api/get_produto_codigo_barras.php?codigo=' + encodeURIComponent(codigo))
+        .then(response => response.json())
+        .then(data => {
+            if (data.sucesso) {
+                const p = data.produto;
+
+                if (p.quantidade_estoque <= 0) {
+                    Swal.fire('Sem estoque', `"${p.nome}" está sem estoque disponível.`, 'warning');
+                    return;
+                }
+
+                const index = itensVenda.findIndex(i => i.id == p.id);
+                if (index > -1) {
+                    itensVenda[index].qtd += 1;
+                } else {
+                    itensVenda.push({
+                        id: p.id,
+                        nome: p.nome,
+                        preco: parseFloat(p.preco) || 0,
+                        qtd: 1
+                    });
+                }
+                recalcularPDV();
+
+                const toastFeedback = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1200,
+                    timerProgressBar: true
+                });
+                toastFeedback.fire({ icon: 'success', title: p.nome });
+
+            } else {
+                Swal.fire('Não encontrado', data.mensagem || 'Código de barras não localizado.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao buscar código de barras:', error);
+            Swal.fire('Erro', 'Não foi possível consultar o código de barras.', 'error');
+        })
+        .finally(() => {
+            const inputCodigo = document.getElementById('input_codigo_barras');
+            if (inputCodigo) inputCodigo.focus();
+        });
 }

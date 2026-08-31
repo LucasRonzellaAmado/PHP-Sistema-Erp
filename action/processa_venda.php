@@ -22,7 +22,6 @@ try {
     $total       = floatval($dados['total']);
     $tipo_venda  = $mysql->real_escape_string($dados['tipo_venda'] ?? 'Local');
     $forma_pagto = $mysql->real_escape_string($dados['forma_pagamento'] ?? 'Dinheiro');
-    file_put_contents('/tmp/debug_venda.txt', "forma_pagto: $forma_pagto\n", FILE_APPEND);
 
     // Inserir Venda Principal
     $sql_venda = "INSERT INTO vendas (id_cliente, usuario_id, id_caixa, valor_total, forma_pagamento, tipo_venda, status_entrega, data_venda) 
