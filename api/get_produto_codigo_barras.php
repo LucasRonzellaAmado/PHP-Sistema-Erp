@@ -11,7 +11,7 @@ if ($codigo === '') {
     exit;
 }
 
-$stmt = $mysql->prepare("SELECT id, nome, preco_venda, quantidade FROM estoque WHERE codigo_barras = ? AND status = 1 LIMIT 1");
+$stmt = $mysql->prepare("SELECT id, nome, preco_venda, quantidade FROM estoque WHERE codigo_barras = ? AND status = 'ATIVO' LIMIT 1");
 $stmt->bind_param("s", $codigo);
 $stmt->execute();
 $res = $stmt->get_result();

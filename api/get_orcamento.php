@@ -1,4 +1,5 @@
 <?php
+require_once '../include/auth.php';
 require_once '../include/conexao.php';
 
 $id = intval($_GET['id']);
@@ -23,7 +24,7 @@ echo "<h3>Detalhes do Orçamento #" . str_pad($id, 5, '0', STR_PAD_LEFT) . "</h3
     </div>
     <div class="col" style="flex: 1;">
         <label style="font-weight: bold; display: block; color: #64748b;">Situação</label>
-        <p>Status: <strong><?= $orc['status'] ?></strong><br>Validade: <?= date('d/m/Y', strtotime($orc['validade'])) ?></p>
+        <p>Status: <strong><?= htmlspecialchars($orc['status']) ?></strong><br>Validade: <?= date('d/m/Y', strtotime($orc['validade'])) ?></p>
     </div>
 </div>
 
@@ -42,8 +43,8 @@ echo "<h3>Detalhes do Orçamento #" . str_pad($id, 5, '0', STR_PAD_LEFT) . "</h3
             <tr style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 10px;"><?= htmlspecialchars($i['nome']) ?></td>
                 <td><?= $i['quantidade'] ?></td>
-                <td>R$ <?= number_format($i['valor_unitario'], 2, ',', '.') ?></td>
-                <td>R$ <?= number_format($i['subtotal'], 2, ',', '.') ?></td>
+                <td>R$ <?= number_format($i['preco_unitario'], 2, ',', '.') ?></td>
+                <td>R$ <?= number_format($i['valor_total_item'], 2, ',', '.') ?></td>
             </tr>
             <?php endwhile; ?>
         </tbody>
@@ -56,9 +57,9 @@ echo "<h3>Detalhes do Orçamento #" . str_pad($id, 5, '0', STR_PAD_LEFT) . "</h3
 </div>
 
 <div style="display:flex; gap:10px; margin-top:20px;">
-    <?php if($orc['status'] == 'Aberto'): ?>
+    <?php if($orc['status'] == 'Pendente'): ?>
         <button class="btn-finalizar" style="background: #10b981; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;" onclick="converterEmVenda(<?= $id ?>)">✅ CONVERTER EM VENDA</button>
         <button class="btn-remover" style="background:#ef4444; color:#fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;" onclick="cancelarOrcamento(<?= $id ?>)">🚫 CANCELAR</button>
     <?php endif; ?>
-    <button class="btn-primary" style="background:#2563eb; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;" onclick="window.open('gerar_pdf_orcamento.php?id=<?= $id ?>')">🖨️ IMPRIMIR PDF</button>
+    <button class="btn-primary" style="background:#2563eb; color: #fff; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;" onclick="window.open('imprimir_orcamento.php?id=<?= $id ?>')">🖨️ IMPRIMIR PDF</button>
 </div>

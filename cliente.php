@@ -2,37 +2,45 @@
 require_once 'include/auth.php';
 require_once 'include/conexao.php';
 
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'admin'])) {
+    header("Location: home.php?erro=sem_permissao");
+    exit;
+}
+
 function limparValorMoeda($valor) {
     $valor = str_replace('.', '', $valor);
     $valor = str_replace(',', '.', $valor);
     return floatval($valor);
 }
 
-$alert_script = ""; 
+$alert_script = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tipo = $_POST['tipo_pessoa'];
-    $nome = $mysql->real_escape_string($_POST['nome']);
-    $fantasia = $mysql->real_escape_string($_POST['nome_fantasia']);
-    $cpf_cnpj = $mysql->real_escape_string($_POST['cpf_cnpj']);
-    $email = $mysql->real_escape_string($_POST['email']);
-    $celular = $mysql->real_escape_string($_POST['celular']);
-    $cep = $mysql->real_escape_string($_POST['cep']);
-    $endereco = $mysql->real_escape_string($_POST['endereco']);
-    $numero = $mysql->real_escape_string($_POST['numero']);
-    $bairro = $mysql->real_escape_string($_POST['bairro']);
-    $cidade = $mysql->real_escape_string($_POST['cidade']);
-    $estado = $mysql->real_escape_string($_POST['estado']);
-    
-    $validar_limite = intval($_POST['validar_limite']);
-    $limite = ($validar_limite === 1) ? limparValorMoeda($_POST['limite_credito']) : 0;
+    csrf_verify_form();
 
-    $sql = "INSERT INTO clientes (tipo_pessoa, nome, nome_fantasia, cpf_cnpj, email, celular, cep, endereco, numero, bairro, city, estado, limite_credito, validar_limite) 
-            VALUES ('$tipo', '$nome', '$fantasia', '$cpf_cnpj', '$email', '$celular', '$cep', '$endereco', '$numero', '$bairro', '$cidade', '$estado', $limite, $validar_limite)";
-    
-    if($mysql->query($sql)) {
+    $tipo = in_array($_POST['tipo_pessoa'] ?? '', ['PF', 'PJ'], true) ? $_POST['tipo_pessoa'] : 'PF';
+    $nome = $_POST['nome'] ?? '';
+    $fantasia = $_POST['nome_fantasia'] ?? '';
+    $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $celular = $_POST['celular'] ?? '';
+    $cep = $_POST['cep'] ?? '';
+    $endereco = $_POST['endereco'] ?? '';
+    $numero = $_POST['numero'] ?? '';
+    $bairro = $_POST['bairro'] ?? '';
+    $cidade = $_POST['cidade'] ?? '';
+    $estado = $_POST['estado'] ?? '';
+
+    $validar_limite = intval($_POST['validar_limite'] ?? 0);
+    $limite = ($validar_limite === 1) ? limparValorMoeda($_POST['limite_credito'] ?? '0') : 0;
+
+    $stmt = $mysql->prepare("INSERT INTO clientes (tipo_pessoa, nome, nome_fantasia, cpf_cnpj, email, celular, cep, endereco, numero, bairro, cidade, estado, limite_credito, validar_limite)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssssssssssdi", $tipo, $nome, $fantasia, $cpf_cnpj, $email, $celular, $cep, $endereco, $numero, $bairro, $cidade, $estado, $limite, $validar_limite);
+
+    if ($stmt->execute()) {
         $novo_id = $mysql->insert_id;
-        $alert_script = "<script>window.onload = () => { confirmarCadastro('$novo_id', '$nome'); }</script>";
+        $alert_script = "<script>window.onload = () => { confirmarCadastro(" . json_encode($novo_id) . ", " . json_encode($nome) . "); }</script>";
     }
 }
 
@@ -70,6 +78,7 @@ while($row = $res_clientes->fetch_assoc()){
             
             <div id="form_cadastro" class="collapsed p-25">
                 <form method="post">
+                    <?php csrf_field(); ?>
                     <div class="section-form">
                         <label class="section-label">1. Dados Básicos</label>
                         <div class="row">
@@ -155,7 +164,11 @@ while($row = $res_clientes->fetch_assoc()){
                     <input type="text" id="smart_search" placeholder="Ex: Maria ou #10..." autocomplete="off" class="input-search-big">
                     <div id="search_results" class="search-results"></div>
                 </div>
-                
+
+                <div id="box_saldo_devedor" style="display:none; margin: 10px 0; padding: 12px 15px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">
+                    <strong style="color:#b91c1c;">Saldo devedor (fiado em aberto): <span id="valor_saldo_devedor">R$ 0,00</span></strong>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table">
                         <thead>

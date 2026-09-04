@@ -8,7 +8,9 @@ if (!in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'admin'])) {
 }
 
 $res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC");
-$res_produtos = $mysql->query("SELECT id, nome, preco FROM estoque WHERE status = 1 ORDER BY nome ASC");
+$res_produtos = $mysql->query("SELECT id, nome,
+    CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco
+    FROM estoque WHERE status = 'ATIVO' ORDER BY nome ASC");
 $data_validade = date('Y-m-d', strtotime('+7 days'));
 ?>
 <!DOCTYPE html>
@@ -32,7 +34,7 @@ $data_validade = date('Y-m-d', strtotime('+7 days'));
                 <p>Crie propostas comerciais personalizadas.</p>
             </div>
             <div class="vendedor-info">
-                <small>Vendedor: <strong><?= $_SESSION['nome'] ?? 'Administrador' ?></strong></small><br>
+                <small>Vendedor: <strong><?= htmlspecialchars($_SESSION['nome'] ?? 'Administrador') ?></strong></small><br>
                 <span>NEXUS FLOW ERP</span>
             </div>
         </header>
@@ -47,7 +49,7 @@ $data_validade = date('Y-m-d', strtotime('+7 days'));
                             <select id="id_cliente">
                                 <option value="">Cliente Avulso (Não identificado)</option>
                                 <?php while($c = $res_clientes->fetch_assoc()): ?>
-                                    <option value="<?= $c['id'] ?>"><?= $c['nome'] ?></option>
+                                    <option value="<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['nome']) ?></option>
                                 <?php endwhile; ?>
                             </select>
                         </div>
@@ -69,8 +71,8 @@ $data_validade = date('Y-m-d', strtotime('+7 days'));
                                 $res_produtos->data_seek(0);
                                 while($p = $res_produtos->fetch_assoc()): 
                                 ?>
-                                    <option value="<?= $p['id'] ?>" data-preco="<?= $p['preco'] ?>" data-nome="<?= $p['nome'] ?>">
-                                        <?= $p['nome'] ?> - R$ <?= number_format($p['preco'], 2, ',', '.') ?>
+                                    <option value="<?= (int)$p['id'] ?>" data-preco="<?= (float)$p['preco'] ?>" data-nome="<?= htmlspecialchars($p['nome']) ?>">
+                                        <?= htmlspecialchars($p['nome']) ?> - R$ <?= number_format($p['preco'], 2, ',', '.') ?>
                                     </option>
                                 <?php endwhile; ?>
                             </select>

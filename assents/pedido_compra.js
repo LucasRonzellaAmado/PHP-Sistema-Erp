@@ -20,15 +20,39 @@ function carregarProdutosFornecedor(id_fornecedor) {
         }
 
         produtos.forEach(p => {
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${p.nome}</strong></td>
-                    <td class="center">${p.quantidade}</td>
-                    <td>R$ ${parseFloat(p.preco_custo).toLocaleString('pt-br', {minimumFractionDigits: 2})}</td>
-                    <td class="center"><input type="number" id="qtd_${p.id}" value="1" min="1" class="input-qtd"></td>
-                    <td><button class="btn-add" onclick="addAoPedido(${p.id}, '${p.nome}', ${p.preco_custo})">ADICIONAR</button></td>
-                </tr>
-            `;
+            const tr = document.createElement('tr');
+
+            const tdNome = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = p.nome;
+            tdNome.appendChild(strong);
+
+            const tdQtd = document.createElement('td');
+            tdQtd.className = 'center';
+            tdQtd.textContent = p.quantidade;
+
+            const tdPreco = document.createElement('td');
+            tdPreco.textContent = 'R$ ' + parseFloat(p.preco_custo).toLocaleString('pt-br', {minimumFractionDigits: 2});
+
+            const tdInput = document.createElement('td');
+            tdInput.className = 'center';
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = `qtd_${p.id}`;
+            input.value = 1;
+            input.min = 1;
+            input.className = 'input-qtd';
+            tdInput.appendChild(input);
+
+            const tdBtn = document.createElement('td');
+            const btn = document.createElement('button');
+            btn.className = 'btn-add';
+            btn.textContent = 'ADICIONAR';
+            btn.onclick = () => addAoPedido(p.id, p.nome, p.preco_custo);
+            tdBtn.appendChild(btn);
+
+            tr.append(tdNome, tdQtd, tdPreco, tdInput, tdBtn);
+            tbody.appendChild(tr);
         });
     })
     .catch(err => {
@@ -56,15 +80,34 @@ function renderizarCarrinho() {
     pedido.forEach((item, index) => {
         const sub = item.preco * item.qtd;
         total += sub;
-        tbody.innerHTML += `
-            <tr>
-                <td><strong>${item.nome}</strong><br><small>${item.qtd}un x R$ ${item.preco.toFixed(2)}</small></td>
-                <td style="text-align:right; font-weight:600;">R$ ${sub.toFixed(2)}</td>
-                <td style="text-align:right; width:30px;">
-                    <button class="btn-del" onclick="pedido.splice(${index},1); renderizarCarrinho()">✕</button>
-                </td>
-            </tr>
-        `;
+
+        const tr = document.createElement('tr');
+
+        const tdItem = document.createElement('td');
+        const strong = document.createElement('strong');
+        strong.textContent = item.nome;
+        const small = document.createElement('small');
+        small.textContent = `${item.qtd}un x R$ ${item.preco.toFixed(2)}`;
+        tdItem.appendChild(strong);
+        tdItem.appendChild(document.createElement('br'));
+        tdItem.appendChild(small);
+
+        const tdSub = document.createElement('td');
+        tdSub.style.textAlign = 'right';
+        tdSub.style.fontWeight = '600';
+        tdSub.textContent = `R$ ${sub.toFixed(2)}`;
+
+        const tdBtn = document.createElement('td');
+        tdBtn.style.textAlign = 'right';
+        tdBtn.style.width = '30px';
+        const btn = document.createElement('button');
+        btn.className = 'btn-del';
+        btn.textContent = '✕';
+        btn.onclick = () => { pedido.splice(index, 1); renderizarCarrinho(); };
+        tdBtn.appendChild(btn);
+
+        tr.append(tdItem, tdSub, tdBtn);
+        tbody.appendChild(tr);
     });
     document.getElementById('total_pedido').innerText = `R$ ${total.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
 }
@@ -76,7 +119,7 @@ function finalizarPedido() {
 
     fetch('api/salvar_pedido_compra.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
         body: JSON.stringify({
             id_fornecedor: idFornecedor,
             itens: pedido
@@ -87,6 +130,9 @@ function finalizarPedido() {
         if(res.success) {
             Swal.fire('Sucesso', 'Pedido de compra gerado com sucesso!', 'success')
             .then(() => location.reload());
+        } else {
+            Swal.fire('Erro', res.message || 'Não foi possível gerar o pedido.', 'error');
         }
-    });
+    })
+    .catch(() => Swal.fire('Erro', 'Falha na conexão.', 'error'));
 }

@@ -8,8 +8,14 @@ function buscarClientePorId(id) {
 function toggleParcelas() {
     const formaSelect = document.getElementById('forma_pagamento');
     const divParcelas = document.getElementById('div_parcelas');
+    const divFiado = document.getElementById('div_vencimento_fiado');
     if(formaSelect && divParcelas) {
         divParcelas.className = (formaSelect.value === 'Cartão Crédito') ? '' : 'hidden';
+    }
+    if (formaSelect && divFiado) {
+        const option = formaSelect.options[formaSelect.selectedIndex];
+        const permitePrazo = option && option.dataset.prazo === '1';
+        divFiado.className = permitePrazo ? '' : 'hidden';
     }
 }
 
@@ -66,17 +72,33 @@ function recalcularPDV() {
         itensVenda.forEach((item, index) => {
             const totalItem = item.preco * item.qtd;
             subtotal += totalItem;
-            tbody.innerHTML += `
-                <tr>
-                    <td>${item.nome}</td>
-                    <td class="center">${item.qtd}</td>
-                    <td>R$ ${item.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td>R$ ${totalItem.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td class="center">
-                        <button type="button" class="btn-remove-item" onclick="removerItemPDV(${index})">×</button>
-                    </td>
-                </tr>
-            `;
+
+            const tr = document.createElement('tr');
+
+            const tdNome = document.createElement('td');
+            tdNome.textContent = item.nome;
+
+            const tdQtd = document.createElement('td');
+            tdQtd.className = 'center';
+            tdQtd.textContent = item.qtd;
+
+            const tdPreco = document.createElement('td');
+            tdPreco.textContent = 'R$ ' + item.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+            const tdTotal = document.createElement('td');
+            tdTotal.textContent = 'R$ ' + totalItem.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+            const tdBtn = document.createElement('td');
+            tdBtn.className = 'center';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn-remove-item';
+            btn.textContent = '×';
+            btn.onclick = () => removerItemPDV(index);
+            tdBtn.appendChild(btn);
+
+            tr.append(tdNome, tdQtd, tdPreco, tdTotal, tdBtn);
+            tbody.appendChild(tr);
         });
     }
 
@@ -115,6 +137,13 @@ function finalizarVendaPDV() {
     const desconto = parseFloat(document.getElementById('desconto_geral')?.value || 0) || 0;
     const emitirNota = document.getElementById('emitir_nota')?.checked ? 1 : 0;
 
+    const divFiado = document.getElementById('div_vencimento_fiado');
+    const ehFiado = divFiado && !divFiado.className.includes('hidden');
+    if (ehFiado && idCliente === '1') {
+        Swal.fire('Atenção', 'Venda a prazo (fiado) exige um cliente cadastrado, não pode ser "Consumidor Final".', 'warning');
+        return;
+    }
+
     const dados = {
         id_cliente: idCliente,
         forma_pagamento: formaPgto,
@@ -123,6 +152,7 @@ function finalizarVendaPDV() {
         desconto: desconto,
         itens: itensVenda,
         gerar_nf: emitirNota,
+        vencimento_fiado: ehFiado ? document.getElementById('vencimento_fiado')?.value : null,
         entrega: {
             rua: document.getElementById('ent_logradouro')?.value || '',
             num: document.getElementById('ent_numero')?.value || '',
@@ -131,9 +161,9 @@ function finalizarVendaPDV() {
         }
     };
 
-    fetch('action/processa_venda.php', { 
+    fetch('action/processa_venda.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
         body: JSON.stringify(dados)
     })
     .then(response => {

@@ -45,6 +45,8 @@ while ($m = $res_mov->fetch_assoc()) {
 $saldo_esperado = (float)$caixa['valor_inicial'] + $saldo_movimentacoes;
 
 if (isset($_POST['confirmar_fechamento'])) {
+    csrf_verify_form();
+
     $valor_contado = limparValor($_POST['valor_total_final']);
     $data_fechamento = date('Y-m-d H:i:s');
 
@@ -52,10 +54,12 @@ if (isset($_POST['confirmar_fechamento'])) {
     $stmt = $mysql->prepare($sql);
     $stmt->bind_param("ddsi", $saldo_esperado, $valor_contado, $data_fechamento, $caixa_id);
 
-    if ($stmt->execute()) { 
+    if ($stmt->execute()) {
+        $diferenca = $valor_contado - $saldo_esperado;
+        registrar_log($mysql, 'fechar_caixa', 'controle_caixas', $caixa_id, "Esperado: R$ " . number_format($saldo_esperado, 2, ',', '.') . ", Contado: R$ " . number_format($valor_contado, 2, ',', '.') . ", Diferença: R$ " . number_format($diferenca, 2, ',', '.'));
         unset($_SESSION['caixa_aberto'], $_SESSION['id_caixa_atual']);
-        header("Location: caixa.php?msg=caixa_fechado_sucesso"); 
-        exit; 
+        header("Location: caixa.php?msg=caixa_fechado_sucesso");
+        exit;
     }
 }
 ?>
@@ -78,6 +82,7 @@ if (isset($_POST['confirmar_fechamento'])) {
         </div>
 
         <form method="post" id="formFechamento">
+            <?php csrf_field(); ?>
             <div class="pdv-grid">
                 <div class="col-principal">
                     <div class="card-erp">

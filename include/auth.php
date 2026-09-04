@@ -1,7 +1,8 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/session.php';
+iniciar_sessao_segura();
+require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/auditoria.php';
 
 if (!isset($_SESSION['id'])) {
     header("Location: login.php");

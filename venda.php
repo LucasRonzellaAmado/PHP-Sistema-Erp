@@ -38,10 +38,11 @@ if (!in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
 }
 
 $res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC");
-$sql_produtos = "SELECT id, nome, 
-    CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda, 
-    quantidade FROM estoque WHERE status IN ('Ativo', '1', '') OR status IS NULL ORDER BY nome ASC";
+$sql_produtos = "SELECT id, nome,
+    CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda,
+    quantidade FROM estoque WHERE status = 'ATIVO' ORDER BY nome ASC";
 $res_produtos = $mysql->query($sql_produtos);
+$res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pagamento WHERE status = 1 ORDER BY id ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -95,7 +96,7 @@ $res_produtos = $mysql->query($sql_produtos);
                 <p>Realize vendas rápidas e emita comprovantes.</p>
             </div>
             <div class="operador-badge">
-                <small>Operador: <strong><?= explode(' ', $_SESSION['nome'])[0] ?></strong></small><br>
+                <small>Operador: <strong><?= htmlspecialchars(explode(' ', $_SESSION['nome'])[0]) ?></strong></small><br>
                 <span class="status-caixa">● CAIXA ABERTO</span>
             </div>
         </header>
@@ -109,7 +110,7 @@ $res_produtos = $mysql->query($sql_produtos);
                         <select id="id_cliente">
                             <option value="1">Consumidor Final</option>
                             <?php while($c = $res_clientes->fetch_assoc()): ?>
-                                <option value="<?= $c['id'] ?>"><?= $c['nome'] ?></option>
+                                <option value="<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['nome']) ?></option>
                             <?php endwhile; ?>
                         </select>
                     </div>
@@ -128,10 +129,10 @@ $res_produtos = $mysql->query($sql_produtos);
                             <?php 
                             mysqli_data_seek($res_produtos, 0); 
                             while($p = $res_produtos->fetch_assoc()): ?>
-                                <option value="<?= $p['id'] ?>" 
-                                        data-nome="<?= $p['nome'] ?>" 
-                                        data-preco="<?= $p['preco_venda'] ?>">
-                                    <?= $p['id'] ?> - <?= $p['nome'] ?> (R$ <?= number_format($p['preco_venda'], 2, ',', '.') ?>)
+                                <option value="<?= (int)$p['id'] ?>"
+                                        data-nome="<?= htmlspecialchars($p['nome']) ?>"
+                                        data-preco="<?= (float)$p['preco_venda'] ?>">
+                                    <?= (int)$p['id'] ?> - <?= htmlspecialchars($p['nome']) ?> (R$ <?= number_format($p['preco_venda'], 2, ',', '.') ?>)
                                 </option>
                             <?php endwhile; ?>
                         </select>
@@ -187,10 +188,9 @@ $res_produtos = $mysql->query($sql_produtos);
 
                     <label class="label-tiny mt-2">FORMA DE PAGAMENTO</label>
                     <select id="forma_pagamento" onchange="toggleParcelas()">
-                        <option value="Dinheiro">Dinheiro</option>
-                        <option value="Pix">Pix</option>
-                        <option value="Cartão Débito">Cartão Débito</option>
-                        <option value="Cartão Crédito">Cartão Crédito</option>
+                        <?php while ($fp = $res_formas_pagamento->fetch_assoc()): ?>
+                            <option value="<?= htmlspecialchars($fp['nome']) ?>" data-prazo="<?= (int)$fp['permite_prazo'] ?>"><?= htmlspecialchars($fp['nome']) ?></option>
+                        <?php endwhile; ?>
                     </select>
 
                     <div id="div_parcelas" class="hidden">
@@ -200,6 +200,12 @@ $res_produtos = $mysql->query($sql_produtos);
                             <option value="2">2x sem juros</option>
                             <option value="3">3x sem juros</option>
                         </select>
+                    </div>
+
+                    <div id="div_vencimento_fiado" class="hidden">
+                        <label class="label-tiny">VENCIMENTO (FIADO)</label>
+                        <input type="date" id="vencimento_fiado" class="form-control" value="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                        <small style="color:#94a3b8;">Selecione um cliente cadastrado — obrigatório para venda a prazo.</small>
                     </div>
 
                     <div class="total-box-pdv">

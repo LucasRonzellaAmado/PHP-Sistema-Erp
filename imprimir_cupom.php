@@ -39,7 +39,7 @@ $itens = $mysql->query($query_itens);
         <div class="font-sm">
             ORDEM: #<?= str_pad($id, 6, '0', STR_PAD_LEFT) ?><br>
             DATA:  <?= date('d/m/Y H:i:s', strtotime($venda['data_venda'])) ?><br>
-            VEND:  <?= strtoupper($venda['vendedor'] ?? 'SISTEMA') ?>
+            VEND:  <?= htmlspecialchars(strtoupper($venda['vendedor'] ?? 'SISTEMA')) ?>
         </div>
         <div class="linha-tracejada"></div>
         <table>
@@ -70,7 +70,7 @@ $itens = $mysql->query($query_itens);
         <div class="linha-tracejada"></div>
         <div class="font-sm">
             <strong>FORMA DE PAGAMENTO:</strong><br>
-            <?= $venda['forma_pagamento'] ?? 'NÃO INFORMADA' ?>
+            <?= htmlspecialchars($venda['forma_pagamento'] ?? 'NÃO INFORMADA') ?>
         </div>
         <div class="linha-tracejada"></div>
         <div class="text-center footer-space">

@@ -7,20 +7,38 @@ $vendas_hoje = $mysql->query("SELECT SUM(valor_total) as total FROM vendas WHERE
 $total_vendas = $vendas_hoje['total'] ?? 0;
 
 // 2. Alertas de Estoque
-$estoque_baixo = $mysql->query("SELECT COUNT(*) as total FROM estoque WHERE quantidade <= qtd_minima AND status = 1")->fetch_assoc();
+$estoque_baixo = $mysql->query("SELECT COUNT(*) as total FROM estoque WHERE quantidade <= qtd_minima AND status = 'ATIVO'")->fetch_assoc();
 
 // 3. Orçamentos Pendentes
 $orc_res = $mysql->query("SELECT COUNT(*) as total FROM orcamentos WHERE status = 'Aberto'")->fetch_assoc();
 $total_orc_pendentes = $orc_res['total'] ?? 0;
 
-// 4. Lógica do Gráfico de Linha (Faturamento 7 dias)
+// 3b. Financeiro (só para gerente/admin)
+$mostra_financeiro = in_array(strtolower($_SESSION['nivel'] ?? ''), ['gerente', 'admin']);
+$total_a_pagar_vencido = 0;
+$total_a_receber_vencido = 0;
+if ($mostra_financeiro) {
+    $r1 = $mysql->query("SELECT COALESCE(SUM(valor),0) as total FROM contas_pagar WHERE status = 'Pendente' AND data_vencimento < CURDATE()")->fetch_assoc();
+    $total_a_pagar_vencido = (float)$r1['total'];
+    $r2 = $mysql->query("SELECT COALESCE(SUM(valor),0) as total FROM contas_receber WHERE status = 'Pendente' AND data_vencimento < CURDATE()")->fetch_assoc();
+    $total_a_receber_vencido = (float)$r2['total'];
+}
+
+// 4. Lógica do Gráfico de Linha (Faturamento 7 dias) — uma única query agregada em vez de 7 consultas em loop
 $dias = [];
 $valores = [];
+$faturamento_por_dia = [];
+$res_fat = $mysql->query("SELECT DATE(data_venda) as dia, SUM(valor_total) as total
+                           FROM vendas
+                           WHERE data_venda >= CURDATE() - INTERVAL 6 DAY
+                           GROUP BY DATE(data_venda)");
+while ($row = $res_fat->fetch_assoc()) {
+    $faturamento_por_dia[$row['dia']] = (float)$row['total'];
+}
 for ($i = 6; $i >= 0; $i--) {
     $data = date('Y-m-d', strtotime("-$i days"));
     $dias[] = date('d/m', strtotime($data));
-    $v = $mysql->query("SELECT SUM(valor_total) as total FROM vendas WHERE DATE(data_venda) = '$data'")->fetch_assoc();
-    $valores[] = (float)($v['total'] ?? 0);
+    $valores[] = $faturamento_por_dia[$data] ?? 0;
 }
 
 // 5. Lógica do Gráfico de Rosca (Status Orçamentos)
@@ -68,7 +86,7 @@ while($row = $stats_res->fetch_assoc()){
         
         <header style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 30px;">
             <div>
-                <h2 style="font-size: 24px; color: #0f172a;">Olá, <?= explode(' ', $_SESSION['nome'])[0] ?> 👋</h2>
+                <h2 style="font-size: 24px; color: #0f172a;">Olá, <?= htmlspecialchars(explode(' ', $_SESSION['nome'])[0]) ?> 👋</h2>
                 <p style="color: #64748b;">Aqui está o que está acontecendo na sua empresa hoje.</p>
             </div>
             <div style="background: white; padding: 10px 20px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: right;">
@@ -81,7 +99,7 @@ while($row = $stats_res->fetch_assoc()){
             <div class="stat-card">
                 <span>💰 Faturamento Hoje</span>
                 <h3>R$ <?= number_format($total_vendas, 2, ',', '.') ?></h3>
-                <a href="historico_vendas.php">Ver relatório →</a>
+                <a href="historico-venda.php">Ver relatório →</a>
             </div>
 
             <div class="stat-card <?= ($estoque_baixo['total'] > 0) ? 'alerta' : '' ?>">
@@ -93,8 +111,22 @@ while($row = $stats_res->fetch_assoc()){
             <div class="stat-card">
                 <span>🧾 Propostas Abertas</span>
                 <h3><?= $total_orc_pendentes ?></h3>
-                <a href="historico_orcamento.php">Acompanhar vendas →</a>
+                <a href="historico-orcamento.php">Acompanhar vendas →</a>
             </div>
+
+            <?php if ($mostra_financeiro): ?>
+            <div class="stat-card <?= $total_a_pagar_vencido > 0 ? 'alerta' : '' ?>">
+                <span>💸 Contas a Pagar Atrasadas</span>
+                <h3>R$ <?= number_format($total_a_pagar_vencido, 2, ',', '.') ?></h3>
+                <a href="contas_pagar.php?status=Atrasado" style="<?= $total_a_pagar_vencido > 0 ? 'color:#ef4444' : '' ?>">Ver contas →</a>
+            </div>
+
+            <div class="stat-card <?= $total_a_receber_vencido > 0 ? 'alerta' : '' ?>">
+                <span>💵 Contas a Receber Atrasadas</span>
+                <h3>R$ <?= number_format($total_a_receber_vencido, 2, ',', '.') ?></h3>
+                <a href="contas_receber.php?status=Atrasado" style="<?= $total_a_receber_vencido > 0 ? 'color:#ef4444' : '' ?>">Ver contas →</a>
+            </div>
+            <?php endif; ?>
         </div>
 
         

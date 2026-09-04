@@ -1,12 +1,14 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/session.php';
+iniciar_sessao_segura();
+require_once __DIR__ . '/csrf.php';
 
 $paginaAtual = basename($_SERVER['PHP_SELF']);
 $nivel = strtolower($_SESSION['nivel'] ?? '');
 ?>
 
+<meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
+<script>window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;</script>
 <link rel="stylesheet" href="assents/sidebar.css">
 
 <div class="sidebar">
@@ -71,6 +73,30 @@ $nivel = strtolower($_SESSION['nivel'] ?? '');
             <a class="<?= $paginaAtual == 'pedido_compra.php' ? 'ativo' : '' ?>" href="pedido_compra.php">
                 📝 <span>Pedido Compra</span>
             </a>
+            <a class="<?= $paginaAtual == 'categorias.php' ? 'ativo' : '' ?>" href="categorias.php">
+                🏷️ <span>Categorias</span>
+            </a>
+            <a class="<?= $paginaAtual == 'marcas.php' ? 'ativo' : '' ?>" href="marcas.php">
+                🏭 <span>Marcas</span>
+            </a>
+        <?php endif; ?>
+
+        <?php if (in_array($nivel, ['gerente', 'admin'])): ?>
+            <a class="<?= $paginaAtual == 'contas_pagar.php' ? 'ativo' : '' ?>" href="contas_pagar.php">
+                💸 <span>Contas a Pagar</span>
+            </a>
+            <a class="<?= $paginaAtual == 'contas_receber.php' ? 'ativo' : '' ?>" href="contas_receber.php">
+                💵 <span>Contas a Receber</span>
+            </a>
+            <a class="<?= $paginaAtual == 'relatorios.php' ? 'ativo' : '' ?>" href="relatorios.php">
+                📈 <span>Relatórios</span>
+            </a>
+        <?php endif; ?>
+
+        <?php if ($nivel === 'admin'): ?>
+            <a class="<?= $paginaAtual == 'formas_pagamento.php' ? 'ativo' : '' ?>" href="formas_pagamento.php">
+                💳 <span>Formas de Pagamento</span>
+            </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'admin'])): ?>
@@ -78,9 +104,25 @@ $nivel = strtolower($_SESSION['nivel'] ?? '');
                 🏛️ <span>Notas Fiscais</span>
             </a>
         <?php endif; ?>
+
+        <?php if (in_array($nivel, ['gerente', 'admin'])): ?>
+            <a class="<?= $paginaAtual == 'usuarios.php' ? 'ativo' : '' ?>" href="usuarios.php">
+                🔑 <span>Usuários</span>
+            </a>
+        <?php endif; ?>
+
+        <?php if ($nivel === 'admin'): ?>
+            <a class="<?= $paginaAtual == 'auditoria.php' ? 'ativo' : '' ?>" href="auditoria.php">
+                🕵️ <span>Auditoria</span>
+            </a>
+        <?php endif; ?>
     </nav>
 
     <div class="rodape">
+
+        <a class="<?= $paginaAtual == 'perfil.php' ? 'ativo' : '' ?>" href="perfil.php">
+            👤 <span>Meu Perfil</span>
+        </a>
 
                 <a href="action/logout.php" class="logout">
 

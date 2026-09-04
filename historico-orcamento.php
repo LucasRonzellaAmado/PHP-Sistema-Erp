@@ -14,19 +14,27 @@ $data_inicio = $_GET['inicio'] ?? '';
 $data_fim = $_GET['fim'] ?? '';
 
 $condicoes = [];
-if ($status_filtro) $condicoes[] = "o.status = '$status_filtro'";
-if ($data_inicio) $condicoes[] = "o.data_emissao >= '$data_inicio'";
-if ($data_fim) $condicoes[] = "o.data_emissao <= '$data_fim'";
+$params = [];
+$types = "";
+if ($status_filtro !== '') { $condicoes[] = "o.status = ?"; $params[] = $status_filtro; $types .= "s"; }
+if ($data_inicio !== '')   { $condicoes[] = "o.data_emissao >= ?"; $params[] = $data_inicio; $types .= "s"; }
+if ($data_fim !== '')      { $condicoes[] = "o.data_emissao <= ?"; $params[] = $data_fim; $types .= "s"; }
 
 $where = count($condicoes) > 0 ? "WHERE " . implode(" AND ", $condicoes) : "";
 
-$sql = "SELECT o.*, u.nome as nome_vendedor, c.nome as nome_cliente 
+$sql = "SELECT o.*, u.nome as nome_vendedor, c.nome as nome_cliente
         FROM orcamentos o
         LEFT JOIN usuarios u ON o.usuario_id = u.id
         LEFT JOIN clientes c ON o.id_cliente = c.id
         $where
         ORDER BY o.id DESC";
-$res = $mysql->query($sql);
+
+$stmt = $mysql->prepare($sql);
+if ($params) {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$res = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -57,18 +65,18 @@ $res = $mysql->query($sql);
                     <label>Status</label>
                     <select name="status" class="input-erp">
                         <option value="">Todos os Status</option>
-                        <option value="Aberto" <?= $status_filtro == 'Aberto' ? 'selected' : '' ?>>Aberto</option>
+                        <option value="Pendente" <?= $status_filtro == 'Pendente' ? 'selected' : '' ?>>Pendente</option>
                         <option value="Aprovado" <?= $status_filtro == 'Aprovado' ? 'selected' : '' ?>>Aprovado</option>
                         <option value="Cancelado" <?= $status_filtro == 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
                     </select>
                 </div>
                 <div class="filter-item">
                     <label>Início</label>
-                    <input type="date" name="inicio" class="input-erp" value="<?= $data_inicio ?>">
+                    <input type="date" name="inicio" class="input-erp" value="<?= htmlspecialchars($data_inicio) ?>">
                 </div>
                 <div class="filter-item">
                     <label>Fim</label>
-                    <input type="date" name="fim" class="input-erp" value="<?= $data_fim ?>">
+                    <input type="date" name="fim" class="input-erp" value="<?= htmlspecialchars($data_fim) ?>">
                 </div>
                 <div class="filter-item-btn">
                     <button type="submit" class="btn-filter">FILTRAR</button>
@@ -93,7 +101,7 @@ $res = $mysql->query($sql);
                     <?php while($o = $res->fetch_assoc()): 
                         $hoje = new DateTime();
                         $validade = new DateTime($o['validade']);
-                        $expirado = ($hoje > $validade && $o['status'] == 'Aberto');
+                        $expirado = ($hoje > $validade && $o['status'] == 'Pendente');
                         
                         $status_label = $o['status'];
                         $class = "status-" . strtolower($o['status']);
@@ -112,8 +120,8 @@ $res = $mysql->query($sql);
                         </td>
                         <td class="actions-cell">
                             <button class="btn-view" data-id="<?= $o['id'] ?>">🔍 Detalhes</button>
-                            <?php if($o['status'] == 'Aberto' && !$expirado): ?>
-                                <a href="aprovar_orcamento.php?id=<?= $o['id'] ?>" class="btn-approve" title="Aprovar">✅</a>
+                            <?php if($o['status'] == 'Pendente' && !$expirado): ?>
+                                <a href="aprovar_orcamento.php?id=<?= (int)$o['id'] ?>&csrf=<?= urlencode(csrf_token()) ?>" class="btn-approve" title="Aprovar">✅</a>
                             <?php endif; ?>
                         </td>
                     </tr>

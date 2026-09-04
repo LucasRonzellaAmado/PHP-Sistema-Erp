@@ -40,17 +40,31 @@ function renderizarTabelaOrcamento() {
         const subtotal = item.preco * item.qtd;
         totalBruto += subtotal;
 
-        tbody.innerHTML += `
-            <tr>
-                <td>${item.nome}</td>
-                <td class="center">${item.qtd}</td>
-                <td>R$ ${item.preco.toLocaleString('pt-br', {minimumFractionDigits: 2})}</td>
-                <td>R$ ${subtotal.toLocaleString('pt-br', {minimumFractionDigits: 2})}</td>
-                <td class="center">
-                    <button class="btn-remove" onclick="removerItem(${index})">&times;</button>
-                </td>
-            </tr>
-        `;
+        const tr = document.createElement('tr');
+
+        const tdNome = document.createElement('td');
+        tdNome.textContent = item.nome;
+
+        const tdQtd = document.createElement('td');
+        tdQtd.className = 'center';
+        tdQtd.textContent = item.qtd;
+
+        const tdPreco = document.createElement('td');
+        tdPreco.textContent = 'R$ ' + item.preco.toLocaleString('pt-br', {minimumFractionDigits: 2});
+
+        const tdSub = document.createElement('td');
+        tdSub.textContent = 'R$ ' + subtotal.toLocaleString('pt-br', {minimumFractionDigits: 2});
+
+        const tdBtn = document.createElement('td');
+        tdBtn.className = 'center';
+        const btn = document.createElement('button');
+        btn.className = 'btn-remove';
+        btn.innerHTML = '&times;';
+        btn.onclick = () => removerItem(index);
+        tdBtn.appendChild(btn);
+
+        tr.append(tdNome, tdQtd, tdPreco, tdSub, tdBtn);
+        tbody.appendChild(tr);
     });
 
     const valorDesconto = totalBruto * (descontoPercent / 100);
@@ -74,16 +88,17 @@ function salvarOrcamento() {
 
     fetch('api/salvar_orcamento.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
         body: JSON.stringify(dados)
     })
     .then(r => r.json())
     .then(res => {
         if (res.success) {
             Swal.fire('Sucesso!', 'Orçamento gerado: #' + res.id, 'success')
-                .then(() => window.location.href = 'historico_orcamentos.php');
+                .then(() => window.location.href = 'historico-orcamento.php');
         } else {
             Swal.fire('Erro', res.message, 'error');
         }
-    });
+    })
+    .catch(() => Swal.fire('Erro', 'Falha na conexão.', 'error'));
 }

@@ -7,7 +7,7 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'est
     exit;
 }
 
-$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 1 ORDER BY razao_social ASC");
+$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 'Ativo' ORDER BY razao_social ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -38,7 +38,7 @@ $res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHE
                     <select id="select_fornecedor" onchange="carregarProdutosFornecedor(this.value)">
                         <option value="">Clique para selecionar um fornecedor cadastrado...</option>
                         <?php while($f = $res_fornecedores->fetch_assoc()): ?>
-                            <option value="<?= $f['id'] ?>"><?= $f['razao_social'] ?></option>
+                            <option value="<?= (int)$f['id'] ?>"><?= htmlspecialchars($f['razao_social']) ?></option>
                         <?php endwhile; ?>
                     </select>
                 </div>

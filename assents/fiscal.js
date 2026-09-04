@@ -20,11 +20,20 @@ function cancelarNota(id) {
         confirmButtonColor: '#d33'
     }).then((result) => {
         if (result.isConfirmed && result.value) {
-            fetch(`api/cancelar_nf.php?id=${id}&motivo=${result.value}`)
+            fetch('api/cancelar_nf.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
+                body: JSON.stringify({ id, motivo: result.value })
+            })
                 .then(r => r.json())
                 .then(data => {
-                    if(data.success) location.reload();
-                });
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        Swal.fire('Erro', data.message || 'Não foi possível cancelar.', 'error');
+                    }
+                })
+                .catch(() => Swal.fire('Erro', 'Falha na conexão.', 'error'));
         }
     });
 }

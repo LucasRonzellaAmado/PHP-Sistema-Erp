@@ -7,21 +7,27 @@ if (!in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
     exit;
 }
 
-$data_inicio = isset($_GET['data_inicio']) ? $mysql->real_escape_string($_GET['data_inicio']) : date('Y-m-d');
-$data_fim = isset($_GET['data_fim']) ? $mysql->real_escape_string($_GET['data_fim']) : date('Y-m-d');
+$data_inicio = isset($_GET['data_inicio']) ? $_GET['data_inicio'] : date('Y-m-d');
+$data_fim = isset($_GET['data_fim']) ? $_GET['data_fim'] : date('Y-m-d');
+$inicio_periodo = "$data_inicio 00:00:00";
+$fim_periodo = "$data_fim 23:59:59";
 
-$sql = "SELECT v.*, u.nome as nome_vendedor, 
+$sql = "SELECT v.*, u.nome as nome_vendedor,
         (SELECT COUNT(*) FROM venda_itens vi WHERE vi.id_venda = v.id) as total_itens
-        FROM vendas v 
-        LEFT JOIN usuarios u ON v.usuario_id = u.id 
-        WHERE v.data_venda BETWEEN '$data_inicio 00:00:00' AND '$data_fim 23:59:59'
+        FROM vendas v
+        LEFT JOIN usuarios u ON v.usuario_id = u.id
+        WHERE v.data_venda BETWEEN ? AND ?
         ORDER BY v.id DESC";
-$vendas = $mysql->query($sql);
+$stmt = $mysql->prepare($sql);
+$stmt->bind_param("ss", $inicio_periodo, $fim_periodo);
+$stmt->execute();
+$vendas = $stmt->get_result();
 
-$sql_soma = "SELECT SUM(valor_total) as total_periodo FROM vendas 
-             WHERE data_venda BETWEEN '$data_inicio 00:00:00' AND '$data_fim 23:59:59'";
-$res_soma = $mysql->query($sql_soma);
-$total_faturado = $res_soma->fetch_assoc()['total_periodo'] ?? 0;
+$sql_soma = "SELECT SUM(valor_total) as total_periodo FROM vendas WHERE data_venda BETWEEN ? AND ?";
+$stmt_soma = $mysql->prepare($sql_soma);
+$stmt_soma->bind_param("ss", $inicio_periodo, $fim_periodo);
+$stmt_soma->execute();
+$total_faturado = $stmt_soma->get_result()->fetch_assoc()['total_periodo'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -50,11 +56,11 @@ $total_faturado = $res_soma->fetch_assoc()['total_periodo'] ?? 0;
             <form method="GET" class="filtros-venda">
                 <div class="filter-field">
                     <label>INÍCIO</label>
-                    <input type="date" name="data_inicio" value="<?= $data_inicio ?>" class="input-erp">
+                    <input type="date" name="data_inicio" value="<?= htmlspecialchars($data_inicio) ?>" class="input-erp">
                 </div>
                 <div class="filter-field">
                     <label>FIM</label>
-                    <input type="date" name="data_fim" value="<?= $data_fim ?>" class="input-erp">
+                    <input type="date" name="data_fim" value="<?= htmlspecialchars($data_fim) ?>" class="input-erp">
                 </div>
                 <button type="submit" class="btn-filtrar">FILTRAR</button>
             </form>
@@ -82,8 +88,8 @@ $total_faturado = $res_soma->fetch_assoc()['total_periodo'] ?? 0;
                                     <small><?= $v['total_itens'] ?> item(ns)</small>
                                 </td>
                                 <td><?= date('d/m/Y H:i', strtotime($v['data_venda'])) ?></td>
-                                <td><?= htmlspecialchars($v['nome_vendedor'] ?? 'Sistema') ?></td> 
-                                <td><span class="badge"><?= $v['forma_pagamento'] ?></span></td> 
+                                <td><?= htmlspecialchars($v['nome_vendedor'] ?? 'Sistema') ?></td>
+                                <td><span class="badge"><?= htmlspecialchars($v['forma_pagamento']) ?></span></td>
                                 <td class="txt-total">R$ <?= number_format($v['valor_total'], 2, ',', '.') ?></td>
                                 <td class="actions">
                                     <button class="btn-view" data-id="<?= $v['id'] ?>">👁️</button>

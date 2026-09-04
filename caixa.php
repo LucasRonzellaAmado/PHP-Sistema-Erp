@@ -25,27 +25,35 @@ $res_caixa = $mysql->query($sql_caixa);
 $caixa_aberto = $res_caixa->fetch_assoc();
 
 if (isset($_POST['abrir_caixa'])) {
+    csrf_verify_form();
+
     $valor_inicial = limparValor($_POST['valor_inicial']);
     $data_abertura = date('Y-m-d H:i:s');
-    
+
     $stmt = $mysql->prepare("INSERT INTO controle_caixas (usuario_id, valor_inicial, status, data_abertura) VALUES (?, ?, 'Aberto', ?)");
     $stmt->bind_param("ids", $usuario_id, $valor_inicial, $data_abertura);
     $stmt->execute();
-    
+    registrar_log($mysql, 'abrir_caixa', 'controle_caixas', $mysql->insert_id, "Valor inicial: R$ " . number_format($valor_inicial, 2, ',', '.'));
+
     header("Location: caixa.php");
     exit;
 }
 
 if (isset($_POST['movimentar']) && $caixa_aberto) {
+    csrf_verify_form();
+
     $caixa_id = $caixa_aberto['id'];
-    $tipo = $_POST['tipo_mov']; 
+    $tipo = in_array($_POST['tipo_mov'] ?? '', ['ENTRADA', 'SAÍDA'], true) ? $_POST['tipo_mov'] : 'SAÍDA';
+    $origem = $tipo === 'ENTRADA' ? 'Suprimento' : 'Sangria';
     $valor = limparValor($_POST['valor_mov']);
-    $obs = $mysql->real_escape_string($_POST['obs_mov']);
-    
-    $sql_mov = "INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, valor, observacao, forma_pagamento) 
-                VALUES ($caixa_id, '$tipo', 'Manual', $valor, '$obs', 'Dinheiro')";
-    
-    if ($mysql->query($sql_mov)) {
+    $obs = $_POST['obs_mov'] ?? '';
+
+    $stmt_mov = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, valor, observacao, forma_pagamento)
+                VALUES (?, ?, ?, ?, ?, 'Dinheiro')");
+    $stmt_mov->bind_param("issds", $caixa_id, $tipo, $origem, $valor, $obs);
+
+    if ($stmt_mov->execute()) {
+        registrar_log($mysql, 'movimentacao_caixa_manual', 'movimentacoes_caixa', $mysql->insert_id, "$tipo: R$ " . number_format($valor, 2, ',', '.') . " - $obs");
         header("Location: caixa.php");
         exit;
     }
@@ -84,10 +92,11 @@ if ($caixa_aberto) {
         <div class="card-erp">
             <h3 style="color:#2563eb; margin-bottom:15px;">Abertura de Caixa Obrigatória</h3>
             <form method="post">
+                <?php csrf_field(); ?>
                 <div class="row">
                     <div class="col">
                         <label>Operador Responsável</label>
-                        <input type="text" value="<?= $_SESSION['nome'] ?>" disabled class="input-disabled">
+                        <input type="text" value="<?= htmlspecialchars($_SESSION['nome']) ?>" disabled class="input-disabled">
                     </div>
                     <div class="col">
                         <label>Valor Inicial em Dinheiro</label>
@@ -120,6 +129,7 @@ if ($caixa_aberto) {
         <div class="card-erp">
             <h3>Retiradas e Entradas (Sangria/Suprimento)</h3>
             <form method="post">
+                <?php csrf_field(); ?>
                 <div class="row">
                     <div class="col">
                         <label>Tipo de Operação</label>

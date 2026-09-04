@@ -20,16 +20,16 @@ $res_itens = $mysql->query($sql_itens);
     <div class="nf-row">
         <div class="nf-col">
             <h3>1. Identificação da Nota</h3>
-            <p><strong>Tipo:</strong> <?= $nf['tipo_nota'] ?></p>
-            <p><strong>Número:</strong> <?= $nf['numero_nota'] ?> | <strong>Série:</strong> <?= $nf['serie'] ?></p>
-            <p><strong>Chave de Acesso:</strong> <?= $nf['chave_acesso'] ?></p>
-            <p><strong>Status:</strong> <?= $nf['status'] ?></p>
+            <p><strong>Tipo:</strong> <?= htmlspecialchars($nf['tipo_nota']) ?></p>
+            <p><strong>Número:</strong> <?= htmlspecialchars($nf['numero_nota']) ?> | <strong>Série:</strong> <?= htmlspecialchars($nf['serie']) ?></p>
+            <p><strong>Chave de Acesso:</strong> <?= htmlspecialchars($nf['chave_acesso']) ?></p>
+            <p><strong>Status:</strong> <?= htmlspecialchars($nf['status']) ?></p>
             <p><strong>Emissão:</strong> <?= date('d/m/Y H:i', strtotime($nf['data_emissao'])) ?></p>
         </div>
         <div class="nf-col">
             <h3>2. Cliente / Destinatário</h3>
-            <p><strong>Nome:</strong> <?= $nf['cliente_nome'] ?></p>
-            <p><strong>CPF/CNPJ:</strong> <?= $nf['cliente_documento'] ?></p>
+            <p><strong>Nome:</strong> <?= htmlspecialchars($nf['cliente_nome']) ?></p>
+            <p><strong>CPF/CNPJ:</strong> <?= htmlspecialchars($nf['cliente_documento']) ?></p>
         </div>
     </div>
 
@@ -51,10 +51,10 @@ $res_itens = $mysql->query($sql_itens);
         <tbody>
             <?php while($item = $res_itens->fetch_assoc()): ?>
             <tr>
-                <td><?= $item['codigo_prod'] ?></td>
-                <td><?= $item['descricao'] ?></td>
-                <td><?= $item['ncm'] ?></td>
-                <td><?= $item['cfop'] ?></td>
+                <td><?= htmlspecialchars($item['codigo_prod']) ?></td>
+                <td><?= htmlspecialchars($item['descricao']) ?></td>
+                <td><?= htmlspecialchars($item['ncm']) ?></td>
+                <td><?= htmlspecialchars($item['cfop']) ?></td>
                 <td><?= number_format($item['quantidade'], 2) ?></td>
                 <td>R$ <?= number_format($item['valor_unitario'], 2, ',', '.') ?></td>
                 <td>R$ <?= number_format($item['subtotal'], 2, ',', '.') ?></td>

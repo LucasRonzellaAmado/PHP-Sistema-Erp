@@ -12,7 +12,13 @@ inputSearch.addEventListener('input', function() {
         filtrados.forEach(c => {
             const item = document.createElement('div');
             item.className = 'search-item';
-            item.innerHTML = `<span>${c.nome}</span> <b>#${c.id}</b>`;
+            const spanNome = document.createElement('span');
+            spanNome.textContent = c.nome;
+            const bId = document.createElement('b');
+            bId.textContent = `#${c.id}`;
+            item.appendChild(spanNome);
+            item.appendChild(document.createTextNode(' '));
+            item.appendChild(bId);
             item.onclick = () => {
                 inputSearch.value = `${c.nome} (#${c.id})`;
                 resultsDiv.style.display = 'none';
@@ -30,6 +36,24 @@ function carregarHistorico(idCliente) {
     const corpo = document.getElementById('corpo_historico');
     corpo.innerHTML = "<tr><td colspan='7' style='text-align:center;'>🔄 Carregando dados...</td></tr>";
 
+    fetch(`api/get_saldo_devedor.php?id_cliente=${idCliente}`)
+        .then(r => r.json())
+        .then(dados => {
+            const box = document.getElementById('box_saldo_devedor');
+            const valorEl = document.getElementById('valor_saldo_devedor');
+            if (dados.saldo > 0) {
+                let texto = 'R$ ' + dados.saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                if (dados.validar_limite) {
+                    texto += ' de R$ ' + dados.limite.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + ' de limite';
+                }
+                valorEl.innerText = texto;
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        })
+        .catch(() => {});
+
     fetch(`api/get_historico.php?id_cliente=${idCliente}`)
         .then(response => response.json())
         .then(vendas => {
@@ -42,33 +66,63 @@ function carregarHistorico(idCliente) {
                 const valorUnitario = parseFloat(v.valor_venda || 0);
                 const qtd = parseFloat(v.quantidade || 0);
                 const subtotal = valorUnitario * qtd;
-                
-                corpo.innerHTML += `
-                    <tr>
-                        <td>${v.data_venda || '---'}</td>
-                        <td>${v.nome_produto}</td>
-                        <td>${qtd}</td>
-                        <td>R$ ${valorUnitario.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                        <td>R$ ${subtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                        <td><span class="badge-pgto">${v.metodo_pagamento || 'DINHEIRO'}</span></td>
-                        <td>
-                            <button class="btn-action btn-view" onclick="verDetalhes('${v.id}', '${v.nome_produto}', '${qtd}', '${valorUnitario}', '${v.data_venda}')">👁️</button>
-                            <button class="btn-action btn-print" onclick="imprimirVenda('${v.id}')">🖨️</button>
-                        </td>
-                    </tr>`;
+
+                const tr = document.createElement('tr');
+
+                const tdData = document.createElement('td');
+                tdData.textContent = v.data_venda || '---';
+
+                const tdProduto = document.createElement('td');
+                tdProduto.textContent = v.nome_produto || '';
+
+                const tdQtd = document.createElement('td');
+                tdQtd.textContent = qtd;
+
+                const tdUnit = document.createElement('td');
+                tdUnit.textContent = 'R$ ' + valorUnitario.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+                const tdSub = document.createElement('td');
+                tdSub.textContent = 'R$ ' + subtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+                const tdPgto = document.createElement('td');
+                const badgePgto = document.createElement('span');
+                badgePgto.className = 'badge-pgto';
+                badgePgto.textContent = v.metodo_pagamento || 'DINHEIRO';
+                tdPgto.appendChild(badgePgto);
+
+                const tdAcoes = document.createElement('td');
+                const btnVer = document.createElement('button');
+                btnVer.className = 'btn-action btn-view';
+                btnVer.textContent = '👁️';
+                btnVer.onclick = () => verDetalhes(v.id, v.nome_produto, qtd, valorUnitario, v.data_venda);
+                const btnImprimir = document.createElement('button');
+                btnImprimir.className = 'btn-action btn-print';
+                btnImprimir.textContent = '🖨️';
+                btnImprimir.onclick = () => imprimirVenda(v.id);
+                tdAcoes.appendChild(btnVer);
+                tdAcoes.appendChild(btnImprimir);
+
+                tr.append(tdData, tdProduto, tdQtd, tdUnit, tdSub, tdPgto, tdAcoes);
+                corpo.appendChild(tr);
             });
         }).catch(() => {
             corpo.innerHTML = "<tr><td colspan='7' class='txt-red'>❌ Erro de conexão.</td></tr>";
         });
 }
 
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+}
+
 function verDetalhes(id, produto, qtd, valor, data) {
     const total = parseFloat(qtd) * parseFloat(valor);
     Swal.fire({
-        title: `Detalhes da Venda #${id}`,
+        title: `Detalhes da Venda #${escapeHtml(id)}`,
         html: `<div style="text-align: left; line-height: 2;"><hr>
-                <b>Data:</b> ${data}<br><b>Produto:</b> ${produto}<br>
-                <b>Quantidade:</b> ${qtd}<br><b>Valor Unit.:</b> R$ ${parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                <b>Data:</b> ${escapeHtml(data)}<br><b>Produto:</b> ${escapeHtml(produto)}<br>
+                <b>Quantidade:</b> ${escapeHtml(qtd)}<br><b>Valor Unit.:</b> R$ ${parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
                 <b style="color: #2563eb; font-size: 1.2em;">Total: R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</b></div>`,
         icon: 'info', confirmButtonColor: '#2563eb'
     });
