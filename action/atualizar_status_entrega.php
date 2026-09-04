@@ -4,6 +4,13 @@ require_once '../include/conexao.php';
 
 header('Content-Type: application/json');
 
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'admin', 'caixa', 'vendedor'])) {
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Sem permissão para esta ação']);
+    exit;
+}
+
+csrf_verify_json();
+
 // Recebe os dados do fetch (JSON)
 $dados = json_decode(file_get_contents('php://input'), true);
 
@@ -13,18 +20,25 @@ if (!$dados || !isset($dados['id_venda'])) {
 }
 
 $id_venda = intval($dados['id_venda']);
-$novo_status = $mysql->real_escape_string($dados['status']);
-$entregador = isset($dados['entregador']) ? $mysql->real_escape_string($dados['entregador']) : null;
+$novo_status = in_array($dados['status'] ?? '', ['Pendente', 'Em Rota', 'Entregue'], true) ? $dados['status'] : null;
+$entregador = isset($dados['entregador']) ? trim($dados['entregador']) : null;
+
+if (!$novo_status) {
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Status inválido']);
+    exit;
+}
 
 try {
     $mysql->begin_transaction();
 
-    // 1. Atualiza o status na tabela principal de vendas
-    $mysql->query("UPDATE vendas SET status_entrega = '$novo_status' WHERE id = $id_venda");
+    $stmt_v = $mysql->prepare("UPDATE vendas SET status_entrega = ? WHERE id = ?");
+    $stmt_v->bind_param("si", $novo_status, $id_venda);
+    $stmt_v->execute();
 
-    // 2. Se houver um entregador informado, salva ele na tabela de entregas
     if ($entregador) {
-        $mysql->query("UPDATE venda_entregas SET entregador = '$entregador' WHERE id_venda = $id_venda");
+        $stmt_e = $mysql->prepare("UPDATE venda_entregas SET entregador = ? WHERE id_venda = ?");
+        $stmt_e->bind_param("si", $entregador, $id_venda);
+        $stmt_e->execute();
     }
 
     $mysql->commit();
@@ -32,5 +46,6 @@ try {
 
 } catch (Exception $e) {
     $mysql->rollback();
-    echo json_encode(['sucesso' => false, 'mensagem' => $e->getMessage()]);
+    error_log("atualizar_status_entrega.php: " . $e->getMessage());
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao atualizar status.']);
 }

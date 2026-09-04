@@ -143,21 +143,21 @@ $res = $mysql->query($sql);
                 <?php while($ent = $res->fetch_assoc()): ?>
                     <div class="delivery-card">
                         <div class="card-header">
-                            <span style="font-weight: 800;">PEDIDO #<?= $ent['id'] ?></span>
-                            <span class="status-pill status-<?= str_replace(' ', '-', $ent['status_entrega']) ?>">
-                                <?= $ent['status_entrega'] ?>
+                            <span style="font-weight: 800;">PEDIDO #<?= (int)$ent['id'] ?></span>
+                            <span class="status-pill status-<?= htmlspecialchars(str_replace(' ', '-', $ent['status_entrega'])) ?>">
+                                <?= htmlspecialchars($ent['status_entrega']) ?>
                             </span>
                         </div>
                         <div class="card-body">
                             <span class="info-label">Cliente</span>
-                            <div class="info-value"><?= $ent['cliente_nome'] ?> (<?= $ent['telefone'] ?>)</div>
+                            <div class="info-value"><?= htmlspecialchars($ent['cliente_nome'] ?? '') ?> (<?= htmlspecialchars($ent['telefone'] ?? '') ?>)</div>
 
                             <span class="info-label">Endereço</span>
-                            <div class="info-value"><?= $ent['logradouro'] ?>, <?= $ent['numero'] ?> - <?= $ent['bairro'] ?></div>
+                            <div class="info-value"><?= htmlspecialchars($ent['logradouro']) ?>, <?= htmlspecialchars($ent['numero']) ?> - <?= htmlspecialchars($ent['bairro']) ?></div>
 
                             <?php if(!empty($ent['entregador'])): ?>
                                 <span class="info-label">Entregador Responsável</span>
-                                <div class="info-value" style="color: var(--primary);">👤 <?= $ent['entregador'] ?></div>
+                                <div class="info-value" style="color: var(--primary);">👤 <?= htmlspecialchars($ent['entregador']) ?></div>
                             <?php endif; ?>
 
                             <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 10px;">
@@ -210,7 +210,7 @@ $res = $mysql->query($sql);
                     
                     fetch('action/atualizar_status_entrega.php', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
                         body: JSON.stringify({
                             id_venda: idVenda,
                             entregador: entregador,
@@ -250,7 +250,7 @@ $res = $mysql->query($sql);
                 if (result.isConfirmed) {
                     fetch('action/atualizar_status_entrega.php', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.CSRF_TOKEN },
                         body: JSON.stringify({
                             id_venda: idVenda,
                             status: 'Entregue'

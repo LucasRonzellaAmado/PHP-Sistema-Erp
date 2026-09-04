@@ -8,6 +8,8 @@ if (!in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'admin'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    csrf_verify_form();
+
     $user_id = $_SESSION['id'] ?? 1;
 
     function limpar($str) {
@@ -81,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <div class="conteudo">
         <form action="" method="POST">
+            <?php csrf_field(); ?>
             <div class="header-form">
                 <h2>🚚 Cadastro de Fornecedor</h2>
                 <div class="header-actions">

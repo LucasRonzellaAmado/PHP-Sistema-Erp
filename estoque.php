@@ -1,9 +1,15 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once (file_exists('include/session.php') ? 'include/' : '') . 'session.php';
+iniciar_sessao_segura();
 
 $path = file_exists('include/auth.php') ? 'include/' : '';
 require_once $path . 'auth.php';
 require_once $path . 'conexao.php';
+
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'estoque', 'admin'])) {
+    header("Location: home.php?erro=sem_permissao");
+    exit;
+}
 
 $busca = isset($_GET['busca']) ? $mysql->real_escape_string($_GET['busca']) : '';
 $where = !empty($busca) ? "WHERE nome LIKE '%$busca%' OR codigo_produto LIKE '%$busca%' OR codigo_barras LIKE '%$busca%'" : "";
@@ -69,10 +75,11 @@ $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : ""
                         <?php if ($res->num_rows > 0): ?>
                             <?php while ($row = $res->fetch_assoc()): 
                                 $critico = ($row['quantidade'] <= $row['qtd_minima']);
-                                $status_class = ($row['status'] == 'Ativo') ? 'status-active' : 'status-inactive';
+                                $produto_ativo = $row['status'] === 'ATIVO';
+                                $status_class = $produto_ativo ? 'status-active' : 'status-inactive';
                             ?>
                                 <tr>
-                                    <td class="txt-bold">#<?= $row['codigo_produto'] ?></td>
+                                    <td class="txt-bold">#<?= htmlspecialchars($row['codigo_produto']) ?></td>
                                     <td><?= htmlspecialchars($row['nome'] ?? '') ?></td>
                                     <td><span class="badge-categoria"><?= htmlspecialchars($row['categoria'] ?? 'Sem Categoria') ?></span></td>
                                     <td class="<?= $critico ? 'txt-danger txt-bold' : '' ?>">
@@ -81,10 +88,10 @@ $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : ""
                                     </td>
                                     <td><?= number_format($row['qtd_minima'] ?? 0, 2, ',', '.') ?></td>
                                     <td class="txt-primary txt-bold">R$ <?= number_format($row['preco_venda'] ?? 0, 2, ',', '.') ?></td>
-                                    <td><span class="status-dot <?= $status_class ?>"><?= htmlspecialchars($row['status'] ?? 'Inativo') ?></span></td>
+                                    <td><span class="status-dot <?= $status_class ?>"><?= $produto_ativo ? 'ATIVO' : 'INATIVO' ?></span></td>
                                     <td class="actions-cell">
-                                        <a href="editar_estoque.php?id=<?= $row['id'] ?>" class="btn-edit" title="Editar">✏️</a>
-                                        <button onclick="confirmarExclusao(<?= $row['id'] ?>)" class="btn-delete" title="Excluir">🗑️</button>
+                                        <a href="editar_estoque.php?id=<?= (int)$row['id'] ?>" class="btn-edit" title="Editar">✏️</a>
+                                        <button onclick="confirmarExclusao(<?= (int)$row['id'] ?>)" class="btn-delete" title="Desativar">🗑️</button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
@@ -103,17 +110,17 @@ $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : ""
 <script>
 function confirmarExclusao(id) {
     Swal.fire({
-        title: 'Tem certeza?',
-        text: "Esta ação não poderá ser revertida!",
+        title: 'Desativar produto?',
+        text: "O produto deixará de aparecer nas vendas e orçamentos. Você pode reativá-lo depois em Editar > Status.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sim, excluir!',
+        confirmButtonText: 'Sim, desativar!',
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = 'api/deletar_estoque.php?id=' + id;
+            window.location.href = 'api/deletar_estoque.php?id=' + id + '&csrf=' + encodeURIComponent(window.CSRF_TOKEN);
         }
     })
 }

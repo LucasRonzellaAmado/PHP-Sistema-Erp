@@ -79,7 +79,7 @@ $forma_pgto = $venda['forma_pagamento'] ?? 'Não informada';
     <div style="margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
         <div style="padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
             <small style="color: #64748b; font-weight: bold; text-transform: uppercase; font-size: 10px; display: block; margin-bottom: 5px;">Forma de Pagamento</small>
-            <strong style="font-size: 16px; color: #1e293b;">💳 <?= $forma_pgto ?></strong>
+            <strong style="font-size: 16px; color: #1e293b;">💳 <?= htmlspecialchars($forma_pgto) ?></strong>
         </div>
         
         <div style="padding: 15px; background: #eff6ff; border-radius: 10px; border: 1px solid #bfdbfe; text-align: right;">
