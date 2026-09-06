@@ -64,7 +64,7 @@ $res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC")
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>💵 Contas a Receber</h1>
+                <h1><i class="bi bi-arrow-down-circle"></i> Contas a Receber</h1>
                 <p>Vendas a prazo (fiado) e lançamentos manuais de clientes</p>
             </div>
         </div>
@@ -121,7 +121,7 @@ $res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC")
                             <tr>
                                 <td><?= htmlspecialchars($row['cliente_nome'] ?? '—') ?></td>
                                 <td><?= htmlspecialchars($row['descricao']) ?></td>
-                                <td class="<?= $atrasado ? 'txt-danger txt-bold' : '' ?>"><?= date('d/m/Y', strtotime($row['data_vencimento'])) ?><?= $atrasado ? ' ⚠️' : '' ?></td>
+                                <td class="<?= $atrasado ? 'txt-danger txt-bold' : '' ?>"><?= date('d/m/Y', strtotime($row['data_vencimento'])) ?><?= $atrasado ? ' <i class="bi bi-exclamation-triangle"></i>' : '' ?></td>
                                 <td class="txt-bold">R$ <?= number_format($row['valor'], 2, ',', '.') ?></td>
                                 <td><span class="status-dot <?= $row['status']==='Recebido'?'status-active':($atrasado?'status-inactive':'') ?>"><?= strtoupper($atrasado ? 'ATRASADO' : $row['status']) ?></span></td>
                                 <td class="actions-cell">

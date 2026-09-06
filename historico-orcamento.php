@@ -53,7 +53,7 @@ $res = $stmt->get_result();
     <div class="conteudo">
         <div class="header-historico">
             <div>
-                <h2>📋 Histórico de Orçamentos</h2>
+                <h2><i class="bi bi-clipboard-data"></i> Histórico de Orçamentos</h2>
                 <p>Gerencie suas propostas comerciais e conversões.</p>
             </div>
             <a href="orcamento.php" class="btn-primary-custom">+ NOVO ORÇAMENTO</a>
@@ -119,9 +119,9 @@ $res = $stmt->get_result();
                             </span>
                         </td>
                         <td class="actions-cell">
-                            <button class="btn-view" data-id="<?= $o['id'] ?>">🔍 Detalhes</button>
+                            <button class="btn-view" data-id="<?= $o['id'] ?>"><i class="bi bi-eye"></i> Detalhes</button>
                             <?php if($o['status'] == 'Pendente' && !$expirado): ?>
-                                <a href="aprovar_orcamento.php?id=<?= (int)$o['id'] ?>&csrf=<?= urlencode(csrf_token()) ?>" class="btn-approve" title="Aprovar">✅</a>
+                                <a href="aprovar_orcamento.php?id=<?= (int)$o['id'] ?>&csrf=<?= urlencode(csrf_token()) ?>" class="btn-approve" title="Aprovar"><i class="bi bi-check-lg"></i></a>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -138,7 +138,7 @@ $res = $stmt->get_result();
             <p style="text-align:center;">Carregando detalhes...</p>
         </div>
         <div class="modal-footer">
-            <button class="btn-print" id="btn-imprimir-js">🖨️ Imprimir</button>
+            <button class="btn-print" id="btn-imprimir-js"><i class="bi bi-printer"></i> Imprimir</button>
             <button class="btn-close-modal" id="btn-fechar-js">FECHAR</button>
         </div>
     </div>

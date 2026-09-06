@@ -8,8 +8,8 @@
 .sidebar {
     width: 240px;
     height: 100vh;
-    background: linear-gradient(180deg, #0d6efd, #084298);
-    position: fixed; 
+    background: #0f2942;
+    position: fixed;
     top: 0;
     left: 0;
     color: white;
@@ -51,25 +51,32 @@
 .menu a {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 12px 25px;
-    color: rgba(255, 255, 255, 0.85);
+    gap: 14px;
+    padding: 11px 25px;
+    color: rgba(255, 255, 255, 0.75);
     text-decoration: none;
-    font-size: 15px;
-    transition: 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.menu a i {
+    font-size: 16px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .menu a:hover {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.08);
     color: white;
-    padding-left: 30px;
 }
 
 .menu a.ativo {
-    background-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
-    font-weight: bold;
-    border-left: 5px solid white;
+    font-weight: 600;
+    border-left: 3px solid #4a9eff;
 }
 
 .rodape {

@@ -85,9 +85,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form action="" method="POST">
             <?php csrf_field(); ?>
             <div class="header-form">
-                <h2>🚚 Cadastro de Fornecedor</h2>
+                <h2><i class="bi bi-building"></i> Cadastro de Fornecedor</h2>
                 <div class="header-actions">
-                    <button type="submit" class="btn-finalizar">💾 SALVAR FORNECEDOR</button>
+                    <button type="submit" class="btn-finalizar"><i class="bi bi-save"></i> SALVAR FORNECEDOR</button>
                 </div>
             </div>
 

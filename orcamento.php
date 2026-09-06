@@ -30,7 +30,7 @@ $data_validade = date('Y-m-d', strtotime('+7 days'));
     <div class="conteudo">
         <header class="orcamento-header">
             <div>
-                <h2>📝 Gestão de Orçamentos</h2>
+                <h2><i class="bi bi-file-earmark-text"></i> Gestão de Orçamentos</h2>
                 <p>Crie propostas comerciais personalizadas.</p>
             </div>
             <div class="vendedor-info">
@@ -125,7 +125,7 @@ $data_validade = date('Y-m-d', strtotime('+7 days'));
                         <span class="valor-total" id="total_orcamento">R$ 0,00</span>
                     </div>
 
-                    <button class="btn-save" onclick="salvarOrcamento()">💾 SALVAR ORÇAMENTO</button>
+                    <button class="btn-save" onclick="salvarOrcamento()"><i class="bi bi-save"></i> SALVAR ORÇAMENTO</button>
                 </div>
             </div>
         </div>

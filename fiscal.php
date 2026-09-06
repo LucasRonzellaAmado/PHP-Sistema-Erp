@@ -42,7 +42,7 @@ $res = $stmt->get_result();
         
         <div class="conteudo">
             <header class="fiscal-header">
-                <h1>📑 Painel de Notas Fiscais</h1>
+                <h1><i class="bi bi-file-earmark-ruled"></i> Painel de Notas Fiscais</h1>
                 <button class="btn-export" onclick="exportarMes()">Exportar XMLs (Mês)</button>
             </header>
 
@@ -84,8 +84,8 @@ $res = $stmt->get_result();
                                 <a href="<?= htmlspecialchars($nf['pdf_path']) ?>" download>PDF</a>
                             </td>
                             <td>
-                                <button onclick="detalhesNota(<?= $nf['id'] ?>)" class="btn-icon">👁️</button>
-                                <button onclick="cancelarNota(<?= $nf['id'] ?>)" class="btn-icon danger">🚫</button>
+                                <button onclick="detalhesNota(<?= $nf['id'] ?>)" class="btn-icon"><i class="bi bi-eye"></i></button>
+                                <button onclick="cancelarNota(<?= $nf['id'] ?>)" class="btn-icon danger"><i class="bi bi-x-circle"></i></button>
                             </td>
                         </tr>
                         <?php endwhile; ?>

@@ -92,7 +92,7 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
     <div class="conteudo-pdv">
         <header class="pdv-header">
             <div>
-                <h2>🛒 Frente de Caixa (PDV)</h2>
+                <h2><i class="bi bi-cart3"></i> Frente de Caixa (PDV)</h2>
                 <p>Realize vendas rápidas e emita comprovantes.</p>
             </div>
             <div class="operador-badge">
@@ -173,8 +173,8 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
 
                     <label class="label-tiny">TIPO DE PEDIDO</label>
                     <select id="tipo_venda" onchange="toggleEntregaInterface()" class="form-control mb-2">
-                        <option value="Local">🛒 Balcão / Retirada</option>
-                        <option value="Entrega">🛵 Entrega</option>
+                        <option value="Local">Balcão / Retirada</option>
+                        <option value="Entrega">Entrega</option>
                     </select>
 
                     <div id="area_entrega" class="entrega-container">
@@ -221,7 +221,7 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
                         <span class="label-fiscal">Gerar Nota Fiscal?</span>
                     </div>
 
-                    <button class="btn-finalize" onclick="finalizarVendaPDV()">🚀 FINALIZAR VENDA</button>
+                    <button class="btn-finalize" onclick="finalizarVendaPDV()"><i class="bi bi-check2-circle"></i> FINALIZAR VENDA</button>
                 </div>
             </div>
         </div>

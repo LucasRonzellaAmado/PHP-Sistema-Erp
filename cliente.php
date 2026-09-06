@@ -67,7 +67,7 @@ while($row = $res_clientes->fetch_assoc()){
         <div class="card-erp card-border-primary">
             <div class="card-header-toggle" onclick="toggleCard('form_cadastro', 'icon_cad')">
                 <div class="header-title">
-                    <span>👤</span>
+                    <i class="bi bi-person-plus"></i>
                     <h2 class="title-text">Novo Cadastro de Cliente</h2>
                 </div>
                 <div class="header-controls">
@@ -156,7 +156,7 @@ while($row = $res_clientes->fetch_assoc()){
 
         <div class="card-erp">
             <div class="search-header">
-                <h3 class="m-0 color-slate">🔎 Histórico de Compras</h3>
+                <h3 class="m-0 color-slate"><i class="bi bi-search"></i> Histórico de Compras</h3>
             </div>
             <div class="p-20">
                 <div class="search-container">

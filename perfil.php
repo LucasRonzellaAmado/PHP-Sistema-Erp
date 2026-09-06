@@ -47,7 +47,7 @@ if ($pode_alterar_senha && $_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include 'include/sidebar.php'; ?>
     <div class="conteudo">
         <div class="header-edit">
-            <h2>👤 Meu Perfil</h2>
+            <h2><i class="bi bi-person-circle"></i> Meu Perfil</h2>
         </div>
 
         <?php if ($sucesso): ?>

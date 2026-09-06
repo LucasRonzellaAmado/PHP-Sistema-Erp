@@ -26,7 +26,7 @@ $res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHE
     <div class="conteudo">
         <header class="compra-header">
             <div>
-                <h2>📦 Pedido de Compra</h2>
+                <h2><i class="bi bi-clipboard-check"></i> Pedido de Compra</h2>
                 <p>Solicite reposição de estoque aos seus fornecedores.</p>
             </div>
         </header>

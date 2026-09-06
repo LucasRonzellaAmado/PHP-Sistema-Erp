@@ -45,7 +45,7 @@ $NIVEIS_LABEL = [
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>👤 Usuários do Sistema</h1>
+                <h1><i class="bi bi-people"></i> Usuários do Sistema</h1>
                 <p>Gerencie contas de acesso e níveis de permissão</p>
             </div>
             <div class="actions-group">
@@ -64,7 +64,7 @@ $NIVEIS_LABEL = [
             <div class="filter-bar">
                 <form method="GET" action="usuarios.php" class="search-form">
                     <input type="text" name="busca" placeholder="Buscar por nome ou login..." value="<?= htmlspecialchars($busca) ?>">
-                    <button type="submit">🔍 Filtrar</button>
+                    <button type="submit"><i class="bi bi-search"></i> Filtrar</button>
                 </form>
             </div>
 
@@ -92,10 +92,10 @@ $NIVEIS_LABEL = [
                                 <td><span class="status-dot <?= $ativo ? 'status-active' : 'status-inactive' ?>"><?= $ativo ? 'ATIVO' : 'INATIVO' ?></span></td>
                                 <td class="actions-cell">
                                     <?php if ($sou_admin || $nivel_key !== 'admin'): ?>
-                                        <a href="editar_usuario.php?id=<?= (int)$row['id'] ?>" class="btn-edit" title="Editar">✏️</a>
+                                        <a href="editar_usuario.php?id=<?= (int)$row['id'] ?>" class="btn-edit" title="Editar"><i class="bi bi-pencil"></i></a>
                                         <?php if ($row['id'] != $_SESSION['id']): ?>
                                             <button onclick="confirmarToggle(<?= (int)$row['id'] ?>, <?= $ativo ? 'true' : 'false' ?>)" class="btn-delete" title="<?= $ativo ? 'Desativar' : 'Reativar' ?>">
-                                                <?= $ativo ? '🚫' : '✅' ?>
+                                                <i class="bi <?= $ativo ? 'bi-slash-circle' : 'bi-check-circle' ?>"></i>
                                             </button>
                                         <?php endif; ?>
                                     <?php else: ?>

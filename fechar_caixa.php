@@ -77,7 +77,7 @@ if (isset($_POST['confirmar_fechamento'])) {
     
     <div class="conteudo">
         <div class="header-fechamento">
-            <h2>🔒 Fechamento de Turno</h2>
+            <h2><i class="bi bi-lock"></i> Fechamento de Turno</h2>
             <p>Compare os valores do sistema com o dinheiro físico no caixa.</p>
         </div>
 
@@ -86,7 +86,7 @@ if (isset($_POST['confirmar_fechamento'])) {
             <div class="pdv-grid">
                 <div class="col-principal">
                     <div class="card-erp">
-                        <h3 class="card-title">📊 RESUMO DO SISTEMA</h3>
+                        <h3 class="card-title"><i class="bi bi-bar-chart"></i> RESUMO DO SISTEMA</h3>
                         <table class="tabela-resumo">
                             <tr>
                                 <td>Fundo de Caixa (Abertura)</td>
@@ -108,7 +108,7 @@ if (isset($_POST['confirmar_fechamento'])) {
 
                 <div class="col-lateral">
                     <div class="card-erp">
-                        <h3 class="card-title">💵 CONFERÊNCIA FÍSICA</h3>
+                        <h3 class="card-title"><i class="bi bi-cash"></i> CONFERÊNCIA FÍSICA</h3>
                         
                         <div class="input-group">
                             <label>Dinheiro em Espécie</label>

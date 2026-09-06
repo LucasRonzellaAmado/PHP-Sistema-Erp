@@ -64,7 +64,7 @@ $res = $mysql->query("SELECT id, nome, permite_prazo, status FROM formas_pagamen
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>💳 Formas de Pagamento</h1>
+                <h1><i class="bi bi-credit-card"></i> Formas de Pagamento</h1>
                 <p>Usadas no PDV, orçamentos e no financeiro. "Permite prazo" gera conta a receber automaticamente.</p>
             </div>
         </div>
@@ -98,7 +98,7 @@ $res = $mysql->query("SELECT id, nome, permite_prazo, status FROM formas_pagamen
                                 <td><?= $row['permite_prazo'] ? 'Sim' : 'Não' ?></td>
                                 <td><span class="status-dot <?= $row['status'] ? 'status-active' : 'status-inactive' ?>"><?= $row['status'] ? 'ATIVO' : 'INATIVO' ?></span></td>
                                 <td class="actions-cell">
-                                    <button class="btn-edit" title="Editar" onclick='abrirEdicao(<?= json_encode(["id"=>$row["id"],"nome"=>$row["nome"],"status"=>$row["status"],"permite_prazo"=>$row["permite_prazo"]]) ?>)'>✏️</button>
+                                    <button class="btn-edit" title="Editar" onclick='abrirEdicao(<?= json_encode(["id"=>$row["id"],"nome"=>$row["nome"],"status"=>$row["status"],"permite_prazo"=>$row["permite_prazo"]]) ?>)'><i class="bi bi-pencil"></i></button>
                                 </td>
                             </tr>
                             <?php endwhile; ?>

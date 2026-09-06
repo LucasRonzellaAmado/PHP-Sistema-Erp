@@ -128,7 +128,7 @@ $res = $mysql->query($sql);
     <div class="main-container">
         <header class="header-page">
             <div>
-                <h2>🛵 Entregas</h2>
+                <h2><i class="bi bi-truck"></i> Entregas</h2>
                 <p style="margin: 5px 0 0; color: #64748b;">Gerencie o despacho e acompanhamento de pedidos.</p>
             </div>
             
@@ -157,7 +157,7 @@ $res = $mysql->query($sql);
 
                             <?php if(!empty($ent['entregador'])): ?>
                                 <span class="info-label">Entregador Responsável</span>
-                                <div class="info-value" style="color: var(--primary);">👤 <?= htmlspecialchars($ent['entregador']) ?></div>
+                                <div class="info-value" style="color: var(--primary);"><i class="bi bi-person"></i> <?= htmlspecialchars($ent['entregador']) ?></div>
                             <?php endif; ?>
 
                             <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 10px;">
@@ -174,7 +174,7 @@ $res = $mysql->query($sql);
                                 <button class="btn-action btn-green" onclick="concluirEntrega(<?= $ent['id'] ?>)">CONCLUIR ENTREGA</button>
                             <?php endif; ?>
 
-                            <button class="btn-action btn-print" onclick="window.open('imprimir_cupom.php?id=<?= $ent['id'] ?>')">🖨️</button>
+                            <button class="btn-action btn-print" onclick="window.open('imprimir_cupom.php?id=<?= $ent['id'] ?>')"><i class="bi bi-printer"></i></button>
                         </div>
                     </div>
                 <?php endwhile; ?>

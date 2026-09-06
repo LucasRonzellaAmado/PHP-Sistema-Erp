@@ -95,8 +95,8 @@ $res_marcas = $mysql->query("SELECT nome FROM marcas WHERE status = 1 ORDER BY n
     <?php include 'include/sidebar.php'; ?>
     <div class="conteudo">
         <div class="header-edit">
-            <h2>✏️ Editando: <?= htmlspecialchars($dados['nome'] ?? 'Produto') ?></h2>
-            <a href="estoque.php" class="btn-voltar">⬅ Voltar</a>
+            <h2><i class="bi bi-pencil-square"></i> Editando: <?= htmlspecialchars($dados['nome'] ?? 'Produto') ?></h2>
+            <a href="estoque.php" class="btn-voltar"><i class="bi bi-arrow-left"></i> Voltar</a>
         </div>
 
         <div class="card-erp">

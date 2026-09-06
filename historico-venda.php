@@ -44,7 +44,7 @@ $total_faturado = $stmt_soma->get_result()->fetch_assoc()['total_periodo'] ?? 0;
         <div class="conteudo">
             <div class="header-vendas">
                 <div>
-                    <h2>📊 Histórico de Vendas</h2>
+                    <h2><i class="bi bi-bar-chart"></i> Histórico de Vendas</h2>
                     <p>Listagem de transações e faturamento do período.</p>
                 </div>
                 <div class="resumo-faturamento">
@@ -92,8 +92,8 @@ $total_faturado = $stmt_soma->get_result()->fetch_assoc()['total_periodo'] ?? 0;
                                 <td><span class="badge"><?= htmlspecialchars($v['forma_pagamento']) ?></span></td>
                                 <td class="txt-total">R$ <?= number_format($v['valor_total'], 2, ',', '.') ?></td>
                                 <td class="actions">
-                                    <button class="btn-view" data-id="<?= $v['id'] ?>">👁️</button>
-                                    <a href="imprimir_cupom.php?id=<?= $v['id'] ?>" target="_blank" class="btn-print">🖨️</a>
+                                    <button class="btn-view" data-id="<?= $v['id'] ?>"><i class="bi bi-eye"></i></button>
+                                    <a href="imprimir_cupom.php?id=<?= $v['id'] ?>" target="_blank" class="btn-print"><i class="bi bi-printer"></i></a>
                                 </td>
                             </tr>
                             <?php endwhile; ?>

@@ -36,7 +36,7 @@ $RELATORIOS = [
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>📈 Relatórios Gerenciais</h1>
+                <h1><i class="bi bi-graph-up"></i> Relatórios Gerenciais</h1>
                 <p>Indicadores de vendas, estoque e financeiro</p>
             </div>
         </div>
@@ -228,7 +228,7 @@ $RELATORIOS = [
                 $resultado = $lucro_bruto - $despesas;
                 ?>
                 <p style="color:#64748b; font-size:13px; margin-bottom:15px;">
-                    ⚠️ O CMV usa o preço de custo <strong>atual</strong> dos produtos (o sistema não guarda o custo histórico por venda) — é uma aproximação, não um valor contábil exato.
+                    <i class="bi bi-exclamation-triangle"></i> O CMV usa o preço de custo <strong>atual</strong> dos produtos (o sistema não guarda o custo histórico por venda) — é uma aproximação, não um valor contábil exato.
                 </p>
                 <table class="table-erp">
                     <tbody>

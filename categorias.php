@@ -61,7 +61,7 @@ $res = $mysql->query("SELECT id, nome, status FROM categorias ORDER BY nome ASC"
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>🏷️ Categorias de Produtos</h1>
+                <h1><i class="bi bi-tags"></i> Categorias de Produtos</h1>
                 <p>Cadastro mestre usado no estoque, orçamentos e vendas</p>
             </div>
         </div>
@@ -91,7 +91,7 @@ $res = $mysql->query("SELECT id, nome, status FROM categorias ORDER BY nome ASC"
                                 <td><?= htmlspecialchars($row['nome']) ?></td>
                                 <td><span class="status-dot <?= $row['status'] ? 'status-active' : 'status-inactive' ?>"><?= $row['status'] ? 'ATIVO' : 'INATIVO' ?></span></td>
                                 <td class="actions-cell">
-                                    <button class="btn-edit" title="Editar" onclick='abrirEdicao(<?= json_encode(["id"=>$row["id"],"nome"=>$row["nome"],"status"=>$row["status"]]) ?>)'>✏️</button>
+                                    <button class="btn-edit" title="Editar" onclick='abrirEdicao(<?= json_encode(["id"=>$row["id"],"nome"=>$row["nome"],"status"=>$row["status"]]) ?>)'><i class="bi bi-pencil"></i></button>
                                 </td>
                             </tr>
                             <?php endwhile; ?>

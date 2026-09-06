@@ -80,10 +80,10 @@ if ($caixa_aberto) {
     <?php include 'include/sidebar.php'; ?>
     <div class="conteudo" style="flex:1; padding: 25px;">
         <div class="header-caixa">
-            <h2 style="margin:0;">💰 Gestão de Caixa PDV</h2>
+            <h2 style="margin:0;"><i class="bi bi-cash-stack"></i> Gestão de Caixa PDV</h2>
             <?php if ($caixa_aberto): ?>
                 <div class="badge-operador">
-                    👤 Aberto por: <?= htmlspecialchars($caixa_aberto['nome_abertura']) ?>
+                    <i class="bi bi-person"></i> Aberto por: <?= htmlspecialchars($caixa_aberto['nome_abertura']) ?>
                 </div>
             <?php endif; ?>
         </div>

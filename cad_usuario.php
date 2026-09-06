@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include 'include/sidebar.php'; ?>
     <div class="conteudo">
         <div class="header-edit">
-            <h2>➕ Novo Usuário</h2>
-            <a href="usuarios.php" class="btn-voltar">⬅ Voltar</a>
+            <h2><i class="bi bi-person-plus"></i> Novo Usuário</h2>
+            <a href="usuarios.php" class="btn-voltar"><i class="bi bi-arrow-left"></i> Voltar</a>
         </div>
 
         <div class="card-erp" style="max-width:600px;">

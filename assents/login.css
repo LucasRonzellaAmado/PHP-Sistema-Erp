@@ -1,37 +1,87 @@
-body{
-    font-family: Arial, Helvetica, sans-serif;
-    background-image: linear-gradient(45deg, #0d6efd, #084298);
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: #0f2942;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .login {
-    background-color: rgba(0, 0, 0, 0.9);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 80px;
-    border-radius: 15px;
-    color: white;
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 380px;
+    padding: 40px 36px;
+    border-radius: 10px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    color: #1e293b;
 }
 
-.nome, .senha{
-    padding: 15px;
-    border: none;
+.login-logo {
+    display: block;
+    max-width: 130px;
+    margin: 0 auto 20px;
+}
+
+.login h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+    color: #0f2942;
+}
+
+.login form p {
+    margin-bottom: 16px;
+}
+
+.login label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.nome, .senha {
+    padding: 11px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
     outline: none;
-    font-size: 15px;
+    font-size: 14px;
+    width: 100%;
+    transition: border-color 0.15s;
+}
+
+.nome:focus, .senha:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
 }
 
 .enviar {
-    background-color: #dc3545;
+    background-color: #1d4ed8;
     border: none;
-    padding: 15px;
+    padding: 12px;
     width: 100%;
-    border-radius: 10px;
+    border-radius: 6px;
     color: white;
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.15s;
 }
 
 .enviar:hover {
-    background-color: #bb2d3b;
+    background-color: #1e40af;
+}
+
+.enviar:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
 }

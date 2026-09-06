@@ -87,6 +87,7 @@ if (!$erro_bloqueio && isset($_POST['usuario']) && isset($_POST['senha'])) {
 <body>
 
     <div class="login">
+        <img src="assents/Logo.png" alt="NexusFlow" class="login-logo">
         <h1>Entrar</h1>
 
         <?php if ($erro_bloqueio): ?>

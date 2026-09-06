@@ -64,7 +64,7 @@ $res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHE
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>💸 Contas a Pagar</h1>
+                <h1><i class="bi bi-arrow-up-circle"></i> Contas a Pagar</h1>
                 <p>Obrigações com fornecedores, incluindo pedidos de compra</p>
             </div>
         </div>
@@ -121,7 +121,7 @@ $res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHE
                             <tr>
                                 <td><?= htmlspecialchars($row['razao_social'] ?? '—') ?></td>
                                 <td><?= htmlspecialchars($row['descricao']) ?></td>
-                                <td class="<?= $atrasado ? 'txt-danger txt-bold' : '' ?>"><?= date('d/m/Y', strtotime($row['data_vencimento'])) ?><?= $atrasado ? ' ⚠️' : '' ?></td>
+                                <td class="<?= $atrasado ? 'txt-danger txt-bold' : '' ?>"><?= date('d/m/Y', strtotime($row['data_vencimento'])) ?><?= $atrasado ? ' <i class="bi bi-exclamation-triangle"></i>' : '' ?></td>
                                 <td class="txt-bold">R$ <?= number_format($row['valor'], 2, ',', '.') ?></td>
                                 <td><span class="status-dot <?= $row['status']==='Pago'?'status-active':($atrasado?'status-inactive':'') ?>"><?= strtoupper($atrasado ? 'ATRASADO' : $row['status']) ?></span></td>
                                 <td class="actions-cell">
