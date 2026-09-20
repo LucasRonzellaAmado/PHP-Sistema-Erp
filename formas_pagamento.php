@@ -18,8 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nova_forma'])) {
     if ($nome === '') {
         $erro = 'Informe o nome da forma de pagamento.';
     } else {
-        $stmt = $mysql->prepare("INSERT INTO formas_pagamento (nome, permite_prazo, status) VALUES (?, ?, 1)");
-        $stmt->bind_param("si", $nome, $permite_prazo);
+        $stmt = $mysql->prepare("INSERT INTO formas_pagamento (nome, permite_prazo, status, empresa_id) VALUES (?, ?, 1, ?)");
+        $stmt->bind_param("sii", $nome, $permite_prazo, $_SESSION['empresa_id']);
         if (!$stmt->execute()) {
             $erro = ($mysql->errno === 1062) ? 'Já existe uma forma de pagamento com esse nome.' : 'Erro ao salvar.';
         } else {
@@ -38,15 +38,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
     $permite_prazo = isset($_POST['permite_prazo_edit']) ? 1 : 0;
 
     if ($nome !== '') {
-        $stmt = $mysql->prepare("UPDATE formas_pagamento SET nome = ?, permite_prazo = ?, status = ? WHERE id = ?");
-        $stmt->bind_param("siii", $nome, $permite_prazo, $status, $id);
+        $stmt = $mysql->prepare("UPDATE formas_pagamento SET nome = ?, permite_prazo = ?, status = ? WHERE id = ? AND empresa_id = ?");
+        $stmt->bind_param("siiii", $nome, $permite_prazo, $status, $id, $_SESSION['empresa_id']);
         $stmt->execute();
     }
     header("Location: formas_pagamento.php?sucesso=1");
     exit;
 }
 
-$res = $mysql->query("SELECT id, nome, permite_prazo, status FROM formas_pagamento ORDER BY nome ASC");
+$stmt_lista = $mysql->prepare("SELECT id, nome, permite_prazo, status FROM formas_pagamento WHERE empresa_id = ? ORDER BY nome ASC");
+$stmt_lista->bind_param("i", $_SESSION['empresa_id']);
+$stmt_lista->execute();
+$res = $stmt_lista->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

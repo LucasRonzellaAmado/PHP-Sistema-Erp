@@ -87,9 +87,9 @@ $total_faturado = $stmt_soma->get_result()->fetch_assoc()['total_periodo'] ?? 0;
                                     <strong>Venda de Produtos</strong><br>
                                     <small><?= $v['total_itens'] ?> item(ns)</small>
                                 </td>
-                                <td><?= date('d/m/Y H:i', strtotime($v['data_venda'])) ?></td>
+                                <td><?= $v['data_venda'] ? date('d/m/Y H:i', strtotime($v['data_venda'])) : '---' ?></td>
                                 <td><?= htmlspecialchars($v['nome_vendedor'] ?? 'Sistema') ?></td>
-                                <td><span class="badge"><?= htmlspecialchars($v['forma_pagamento']) ?></span></td>
+                                <td><span class="badge"><?= htmlspecialchars($v['forma_pagamento'] ?? '') ?></span></td>
                                 <td class="txt-total">R$ <?= number_format($v['valor_total'], 2, ',', '.') ?></td>
                                 <td class="actions">
                                     <button class="btn-view" data-id="<?= $v['id'] ?>"><i class="bi bi-eye"></i></button>

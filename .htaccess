@@ -1,0 +1,20 @@
+<IfModule mod_authz_core.c>
+    <FilesMatch "^\.|\.(env|sql|log|md)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^\.|\.(env|sql|log|md)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule "(^|/)\.git" - [F,L]
+    RewriteRule "^migrations/" - [F,L]
+</IfModule>
+
+Options -Indexes
+ServerSignature Off

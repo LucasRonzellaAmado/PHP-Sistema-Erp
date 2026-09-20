@@ -144,8 +144,8 @@ $res = $mysql->query($sql);
                     <div class="delivery-card">
                         <div class="card-header">
                             <span style="font-weight: 800;">PEDIDO #<?= (int)$ent['id'] ?></span>
-                            <span class="status-pill status-<?= htmlspecialchars(str_replace(' ', '-', $ent['status_entrega'])) ?>">
-                                <?= htmlspecialchars($ent['status_entrega']) ?>
+                            <span class="status-pill status-<?= htmlspecialchars(str_replace(' ', '-', $ent['status_entrega'] ?? '')) ?>">
+                                <?= htmlspecialchars($ent['status_entrega'] ?? '') ?>
                             </span>
                         </div>
                         <div class="card-body">
@@ -153,7 +153,7 @@ $res = $mysql->query($sql);
                             <div class="info-value"><?= htmlspecialchars($ent['cliente_nome'] ?? '') ?> (<?= htmlspecialchars($ent['telefone'] ?? '') ?>)</div>
 
                             <span class="info-label">Endereço</span>
-                            <div class="info-value"><?= htmlspecialchars($ent['logradouro']) ?>, <?= htmlspecialchars($ent['numero']) ?> - <?= htmlspecialchars($ent['bairro']) ?></div>
+                            <div class="info-value"><?= htmlspecialchars($ent['logradouro'] ?? '') ?>, <?= htmlspecialchars($ent['numero'] ?? '') ?> - <?= htmlspecialchars($ent['bairro'] ?? '') ?></div>
 
                             <?php if(!empty($ent['entregador'])): ?>
                                 <span class="info-label">Entregador Responsável</span>
@@ -161,7 +161,7 @@ $res = $mysql->query($sql);
                             <?php endif; ?>
 
                             <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 10px;">
-                                <div><span class="info-label">Frete</span> <b>R$ <?= number_format($ent['valor_frete'], 2, ',', '.') ?></b></div>
+                                <div><span class="info-label">Frete</span> <b>R$ <?= number_format($ent['valor_frete'] ?? 0, 2, ',', '.') ?></b></div>
                                 <div style="text-align: right;"><span class="info-label">Total</span> <b>R$ <?= number_format($ent['valor_total'], 2, ',', '.') ?></b></div>
                             </div>
                         </div>

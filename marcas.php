@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nova_marca'])) {
     if ($nome === '') {
         $erro = 'Informe o nome da marca.';
     } else {
-        $stmt = $mysql->prepare("INSERT INTO marcas (nome, status) VALUES (?, 1)");
-        $stmt->bind_param("s", $nome);
+        $stmt = $mysql->prepare("INSERT INTO marcas (nome, status, empresa_id) VALUES (?, 1, ?)");
+        $stmt->bind_param("si", $nome, $_SESSION['empresa_id']);
         if (!$stmt->execute()) {
             $erro = ($mysql->errno === 1062) ? 'Já existe uma marca com esse nome.' : 'Erro ao salvar marca.';
         } else {
@@ -35,15 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
     $status = ($_POST['status_edit'] ?? '1') === '1' ? 1 : 0;
 
     if ($nome !== '') {
-        $stmt = $mysql->prepare("UPDATE marcas SET nome = ?, status = ? WHERE id = ?");
-        $stmt->bind_param("sii", $nome, $status, $id);
+        $stmt = $mysql->prepare("UPDATE marcas SET nome = ?, status = ? WHERE id = ? AND empresa_id = ?");
+        $stmt->bind_param("siii", $nome, $status, $id, $_SESSION['empresa_id']);
         $stmt->execute();
     }
     header("Location: marcas.php?sucesso=1");
     exit;
 }
 
-$res = $mysql->query("SELECT id, nome, status FROM marcas ORDER BY nome ASC");
+$stmt_lista = $mysql->prepare("SELECT id, nome, status FROM marcas WHERE empresa_id = ? ORDER BY nome ASC");
+$stmt_lista->bind_param("i", $_SESSION['empresa_id']);
+$stmt_lista->execute();
+$res = $stmt_lista->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

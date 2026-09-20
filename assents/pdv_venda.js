@@ -1,8 +1,25 @@
 let itensVenda = [];
 
 function buscarClientePorId(id) {
-    const select = document.getElementById('id_cliente');
-    if(id && select) select.value = id;
+    const $select = window.jQuery ? jQuery('#id_cliente') : null;
+    if (!id || !$select) return;
+
+    if (id == 1) {
+        $select.val('1').trigger('change');
+        return;
+    }
+
+    fetch('api/buscar_clientes.php?id=' + encodeURIComponent(id))
+        .then(r => r.json())
+        .then(data => {
+            const cliente = data.results && data.results[0];
+            if (!cliente) return;
+            if ($select.find(`option[value='${cliente.id}']`).length === 0) {
+                $select.append(new Option(cliente.text, cliente.id, false, false));
+            }
+            $select.val(String(cliente.id)).trigger('change');
+        })
+        .catch(() => {});
 }
 
 function toggleParcelas() {
@@ -33,14 +50,17 @@ function adicionarItemPDV() {
 
     const select = document.getElementById('select_produto');
     const qtdInput = document.getElementById('qtd_item');
-    
-    if(!select || !select.value) return;
+    const $select = window.jQuery ? jQuery(select) : null;
 
-    const option = select.options[select.selectedIndex];
+    if(!select || !select.value || !$select) return;
+
+    const selecionado = $select.select2('data')[0];
+    if (!selecionado) return;
+
     const item = {
         id: select.value,
-        nome: option.dataset.nome,
-        preco: parseFloat(option.dataset.preco) || 0,
+        nome: selecionado.nome,
+        preco: parseFloat(selecionado.preco) || 0,
         qtd: parseInt(qtdInput.value) || 1
     };
 
@@ -51,7 +71,7 @@ function adicionarItemPDV() {
         itensVenda.push(item);
     }
 
-    select.value = "";
+    $select.val(null).trigger('change');
     qtdInput.value = 1;
     recalcularPDV();
 }
@@ -217,10 +237,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('click', function(e) {
-        const tag = e.target.tagName;
-        if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') {
-            inputCodigo.focus();
-        }
+        setTimeout(() => {
+            const ativo = document.activeElement;
+            const dentroDoSelect2 = e.target.closest('.select2-container, .select2-dropdown, .swal2-container');
+            const campoEditavel = ativo && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(ativo.tagName);
+
+            if (!campoEditavel && !dentroDoSelect2 && ativo !== inputCodigo) {
+                inputCodigo.focus();
+            }
+        }, 0);
     });
 });
 

@@ -120,7 +120,7 @@ if ($caixa_aberto) {
             <div class="col">
                 <div class="card-erp">
                     <label>CAIXA Nº: <?= $caixa_aberto['id'] ?> | <span class="status-aberto">● ABERTO</span></label>
-                    <p class="data-info">Iniciado em: <?= date('d/m/Y H:i', strtotime($caixa_aberto['data_abertura'])) ?></p>
+                    <p class="data-info">Iniciado em: <?= $caixa_aberto['data_abertura'] ? date('d/m/Y H:i', strtotime($caixa_aberto['data_abertura'])) : '---' ?></p>
                     <button class="btn-warning" onclick="location.href='fechar_caixa.php'" style="width: 100%;">IR PARA FECHAMENTO</button>
                 </div>
             </div>
@@ -171,10 +171,10 @@ if ($caixa_aberto) {
                         $cor = ($m['tipo'] == 'ENTRADA') ? '#10b981' : '#ef4444';
                     ?>
                     <tr>
-                        <td><?= date('H:i', strtotime($m['data_hora'])) ?></td>
+                        <td><?= $m['data_hora'] ? date('H:i', strtotime($m['data_hora'])) : '---' ?></td>
                         <td style="color: <?= $cor ?>; font-weight: bold;"><?= $m['tipo'] ?></td>
                         <td style="font-weight: bold;">R$ <?= number_format($m['valor'], 2, ',', '.') ?></td>
-                        <td><small><?= htmlspecialchars($m['observacao']) ?></small></td>
+                        <td><small><?= htmlspecialchars($m['observacao'] ?? '') ?></small></td>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>

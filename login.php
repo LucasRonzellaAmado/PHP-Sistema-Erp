@@ -28,7 +28,7 @@ if (!$erro_bloqueio && isset($_POST['usuario']) && isset($_POST['senha'])) {
         exit('Sessão expirada, recarregue a página e tente novamente.');
     }
 
-    $stmt = $mysql->prepare("SELECT * FROM usuarios WHERE usuario = ? LIMIT 1");
+    $stmt = $mysql->prepare("SELECT u.*, e.status as empresa_status FROM usuarios u LEFT JOIN empresas e ON u.empresa_id = e.id WHERE u.usuario = ? LIMIT 1");
     $stmt->bind_param("s", $_POST['usuario']);
     $stmt->execute();
     $usuario_db = $stmt->get_result()->fetch_assoc();
@@ -54,7 +54,12 @@ if (!$erro_bloqueio && isset($_POST['usuario']) && isset($_POST['senha'])) {
         in_array(strtolower((string)$usuario_db['status']), ['1', 'ativo', 'active'], true)
     );
 
-    if ($senha_ok && $usuario_ativo) {
+    $empresa_ativa = $usuario_db && (
+        strtolower((string)$usuario_db['nivel']) === 'super_admin' ||
+        strtolower((string)($usuario_db['empresa_status'] ?? '')) === 'ativo'
+    );
+
+    if ($senha_ok && $usuario_ativo && $empresa_ativa) {
         session_regenerate_id(true);
 
         $_SESSION['id']         = $usuario_db['id'];
@@ -62,10 +67,11 @@ if (!$erro_bloqueio && isset($_POST['usuario']) && isset($_POST['senha'])) {
         $_SESSION['nome']       = $usuario_db['nome'];
         $_SESSION['nivel']      = $usuario_db['nivel'];
         $_SESSION['status']     = $usuario_db['status'];
+        $_SESSION['empresa_id'] = $usuario_db['empresa_id'];
         unset($_SESSION['login_tentativas'], $_SESSION['login_ultima_tentativa']);
         registrar_log($mysql, 'login_sucesso', 'usuarios', $usuario_db['id']);
 
-        header("Location: home.php");
+        header("Location: " . (strtolower($usuario_db['nivel']) === 'super_admin' ? 'empresas.php' : 'home.php'));
         exit;
 
     } else {

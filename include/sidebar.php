@@ -18,6 +18,11 @@ $nivel = strtolower($_SESSION['nivel'] ?? '');
     </div>
 
     <nav class="menu">
+        <?php if ($nivel === 'super_admin'): ?>
+            <a class="<?= $paginaAtual == 'empresas.php' ? 'ativo' : '' ?>" href="empresas.php">
+                <i class="bi bi-buildings"></i> <span>Empresas</span>
+            </a>
+        <?php else: ?>
         <a class="<?= $paginaAtual == 'home.php' ? 'ativo' : '' ?>" href="home.php">
             <i class="bi bi-speedometer2"></i> <span>Home</span>
         </a>
@@ -117,13 +122,10 @@ $nivel = strtolower($_SESSION['nivel'] ?? '');
                 <i class="bi bi-shield-check"></i> <span>Auditoria</span>
             </a>
         <?php endif; ?>
+        <?php endif; ?>
     </nav>
 
     <div class="rodape">
-
-        <a class="<?= $paginaAtual == 'perfil.php' ? 'ativo' : '' ?>" href="perfil.php">
-            <i class="bi bi-person-circle"></i> <span>Meu Perfil</span>
-        </a>
 
         <a href="action/logout.php" class="logout">
             <i class="bi bi-box-arrow-right"></i> <span>Sair</span>

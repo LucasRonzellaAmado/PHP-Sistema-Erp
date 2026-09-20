@@ -2,15 +2,25 @@
 require_once 'include/auth.php';
 require_once 'include/conexao.php';
 
-$id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
-if (!$id) exit("Venda não encontrada");
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
+    header("Location: home.php?erro=sem_permissao");
+    exit;
+}
 
-$venda = $mysql->query("SELECT v.*, u.nome as vendedor FROM vendas v LEFT JOIN usuarios u ON v.usuario_id = u.id WHERE v.id = $id")->fetch_assoc();
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($id <= 0) exit("Venda não encontrada");
+
+$stmt_venda = $mysql->prepare("SELECT v.*, u.nome as vendedor FROM vendas v LEFT JOIN usuarios u ON v.usuario_id = u.id WHERE v.id = ?");
+$stmt_venda->bind_param("i", $id);
+$stmt_venda->execute();
+$venda = $stmt_venda->get_result()->fetch_assoc();
 
 if (!$venda) exit("Venda inexistente");
 
-$query_itens = "SELECT vi.quantidade, vi.preco_unitario, vi.valor_total_item, e.nome AS produto_nome FROM venda_itens vi LEFT JOIN estoque e ON vi.id_produto = e.id WHERE vi.id_venda = $id";
-$itens = $mysql->query($query_itens);
+$stmt_itens = $mysql->prepare("SELECT vi.quantidade, vi.preco_unitario, vi.valor_total_item, e.nome AS produto_nome FROM venda_itens vi LEFT JOIN estoque e ON vi.id_produto = e.id WHERE vi.id_venda = ?");
+$stmt_itens->bind_param("i", $id);
+$stmt_itens->execute();
+$itens = $stmt_itens->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -38,7 +48,7 @@ $itens = $mysql->query($query_itens);
         <div class="linha-tracejada"></div>
         <div class="font-sm">
             ORDEM: #<?= str_pad($id, 6, '0', STR_PAD_LEFT) ?><br>
-            DATA:  <?= date('d/m/Y H:i:s', strtotime($venda['data_venda'])) ?><br>
+            DATA:  <?= $venda['data_venda'] ? date('d/m/Y H:i:s', strtotime($venda['data_venda'])) : '---' ?><br>
             VEND:  <?= htmlspecialchars(strtoupper($venda['vendedor'] ?? 'SISTEMA')) ?>
         </div>
         <div class="linha-tracejada"></div>

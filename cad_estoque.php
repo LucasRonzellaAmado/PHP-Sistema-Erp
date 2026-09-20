@@ -18,10 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $categoria = trim($_POST['categoria'] ?? '');
     $marca = trim($_POST['marca'] ?? '');
     $unidade = in_array($_POST['unidade'] ?? '', ['KG', 'PEÇA', 'ROLO'], true) ? $_POST['unidade'] : 'PEÇA';
-    $preco_custo = (float)($_POST['preco_custo'] ?? 0);
-    $preco_venda = (float)($_POST['preco_venda'] ?? 0);
-    $quantidade = (float)($_POST['quantidade'] ?? 0);
-    $qtd_minima = (float)($_POST['qtd_minima'] ?? 0);
+    $preco_custo = max(0, (float)($_POST['preco_custo'] ?? 0));
+    $preco_venda = max(0, (float)($_POST['preco_venda'] ?? 0));
+    $quantidade = max(0, (int)round((float)($_POST['quantidade'] ?? 0)));
+    $qtd_minima = max(0, (int)round((float)($_POST['qtd_minima'] ?? 0)));
     $id_fornecedor = !empty($_POST['id_fornecedor']) ? intval($_POST['id_fornecedor']) : null;
 
     if ($nome === '') {
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $stmt = $mysql->prepare("INSERT INTO estoque (nome, codigo_produto, codigo_barras, categoria, marca, unidade, preco_custo, preco_venda, quantidade, qtd_minima, id_fornecedor, status)
                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO')");
-        $stmt->bind_param("ssssssddddi", $nome, $codigo_produto, $codigo_barras, $categoria, $marca, $unidade, $preco_custo, $preco_venda, $quantidade, $qtd_minima, $id_fornecedor);
+        $stmt->bind_param("ssssssddiii", $nome, $codigo_produto, $codigo_barras, $categoria, $marca, $unidade, $preco_custo, $preco_venda, $quantidade, $qtd_minima, $id_fornecedor);
 
         if ($stmt->execute()) {
             header("Location: estoque.php?sucesso_edit=1");
@@ -93,10 +93,10 @@ $res_marcas = $mysql->query("SELECT nome FROM marcas WHERE status = 1 ORDER BY n
                     </div>
 
                     <div class="section-title">2. Valores e Estoque</div>
-                    <div><label>PREÇO CUSTO</label><input type="number" step="0.01" name="preco_custo" class="input-erp" value="0"></div>
-                    <div><label>PREÇO VENDA</label><input type="number" step="0.01" name="preco_venda" class="input-erp" value="0"></div>
-                    <div><label>QUANTIDADE INICIAL</label><input type="number" step="0.01" name="quantidade" class="input-erp" value="0"></div>
-                    <div><label>QTD MÍNIMA</label><input type="number" step="0.01" name="qtd_minima" class="input-erp" value="0"></div>
+                    <div><label>PREÇO CUSTO</label><input type="number" step="0.01" min="0" name="preco_custo" class="input-erp" value="0"></div>
+                    <div><label>PREÇO VENDA</label><input type="number" step="0.01" min="0" name="preco_venda" class="input-erp" value="0"></div>
+                    <div><label>QUANTIDADE INICIAL</label><input type="number" step="1" min="0" name="quantidade" class="input-erp" value="0"></div>
+                    <div><label>QTD MÍNIMA</label><input type="number" step="1" min="0" name="qtd_minima" class="input-erp" value="0"></div>
                     <div><label>UNIDADE</label>
                         <select name="unidade" class="input-erp">
                             <option value="PEÇA">PEÇA</option>

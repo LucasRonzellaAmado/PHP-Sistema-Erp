@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Ativo')";
         
         $stmt = $mysql->prepare($sql);
-        $stmt->bind_param("ssssssssssssssiii", 
+        $stmt->bind_param("sssssssssssssssii",
             $_POST['tipo_pessoa'], 
             $_POST['razao_social'], 
             $_POST['razao_social'],

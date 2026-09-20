@@ -2,6 +2,11 @@
 require_once 'include/auth.php';
 require_once 'include/conexao.php';
 
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
+    header("Location: home.php?erro=sem_permissao");
+    exit;
+}
+
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id <= 0) exit("Orçamento inválido");
 
@@ -47,9 +52,9 @@ $itens = $stmt_itens->get_result();
         <strong>Cliente:</strong> <?= htmlspecialchars($orc['cliente_nome'] ?? 'Consumidor Avulso') ?><br>
         <strong>Contato:</strong> <?= htmlspecialchars($orc['email'] ?? '') ?> <?= htmlspecialchars($orc['telefone'] ?? '') ?><br>
         <strong>Vendedor:</strong> <?= htmlspecialchars($orc['vendedor_nome'] ?? 'Sistema') ?><br>
-        <strong>Emissão:</strong> <?= date('d/m/Y', strtotime($orc['data_emissao'])) ?> &nbsp;
-        <strong>Validade:</strong> <?= date('d/m/Y', strtotime($orc['validade'])) ?><br>
-        <strong>Status:</strong> <?= htmlspecialchars($orc['status']) ?>
+        <strong>Emissão:</strong> <?= $orc['data_emissao'] ? date('d/m/Y', strtotime($orc['data_emissao'])) : '---' ?> &nbsp;
+        <strong>Validade:</strong> <?= $orc['validade'] ? date('d/m/Y', strtotime($orc['validade'])) : '---' ?><br>
+        <strong>Status:</strong> <?= htmlspecialchars($orc['status'] ?? '') ?>
     </p>
 
     <table>

@@ -79,7 +79,7 @@ $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : ""
                                 $status_class = $produto_ativo ? 'status-active' : 'status-inactive';
                             ?>
                                 <tr>
-                                    <td class="txt-bold">#<?= htmlspecialchars($row['codigo_produto']) ?></td>
+                                    <td class="txt-bold">#<?= htmlspecialchars($row['codigo_produto'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['nome'] ?? '') ?></td>
                                     <td><span class="badge-categoria"><?= htmlspecialchars($row['categoria'] ?? 'Sem Categoria') ?></span></td>
                                     <td class="<?= $critico ? 'txt-danger txt-bold' : '' ?>">

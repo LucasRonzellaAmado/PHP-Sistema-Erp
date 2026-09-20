@@ -3,14 +3,14 @@ require_once 'include/auth.php';
 require_once 'include/conexao.php';
 
 // 1. Resumo Financeiro do Dia
-$vendas_hoje = $mysql->query("SELECT SUM(valor_total) as total FROM vendas WHERE DATE(data_venda) = CURDATE()")->fetch_assoc();
+$vendas_hoje = $mysql->query("SELECT SUM(valor_total) as total FROM vendas WHERE data_venda >= CURDATE() AND data_venda < CURDATE() + INTERVAL 1 DAY")->fetch_assoc();
 $total_vendas = $vendas_hoje['total'] ?? 0;
 
 // 2. Alertas de Estoque
 $estoque_baixo = $mysql->query("SELECT COUNT(*) as total FROM estoque WHERE quantidade <= qtd_minima AND status = 'ATIVO'")->fetch_assoc();
 
 // 3. Orçamentos Pendentes
-$orc_res = $mysql->query("SELECT COUNT(*) as total FROM orcamentos WHERE status = 'Aberto'")->fetch_assoc();
+$orc_res = $mysql->query("SELECT COUNT(*) as total FROM orcamentos WHERE status = 'Pendente'")->fetch_assoc();
 $total_orc_pendentes = $orc_res['total'] ?? 0;
 
 // 3b. Financeiro (só para gerente/admin)

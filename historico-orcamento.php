@@ -98,21 +98,21 @@ $res = $stmt->get_result();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while($o = $res->fetch_assoc()): 
+                    <?php while($o = $res->fetch_assoc()):
                         $hoje = new DateTime();
-                        $validade = new DateTime($o['validade']);
+                        $validade = new DateTime($o['validade'] ?? 'now');
                         $expirado = ($hoje > $validade && $o['status'] == 'Pendente');
-                        
-                        $status_label = $o['status'];
-                        $class = "status-" . strtolower($o['status']);
+
+                        $status_label = $o['status'] ?? '';
+                        $class = "status-" . strtolower($o['status'] ?? '');
                         if ($expirado) { $class = "status-expirado"; $status_label = "Expirado"; }
                     ?>
                     <tr>
                         <td><strong>#<?= str_pad($o['id'], 5, '0', STR_PAD_LEFT) ?></strong></td>
-                        <td><?= date('d/m/Y', strtotime($o['data_emissao'])) ?></td>
+                        <td><?= $o['data_emissao'] ? date('d/m/Y', strtotime($o['data_emissao'])) : '---' ?></td>
                         <td><?= htmlspecialchars($o['nome_cliente'] ?? 'Consumidor Avulso') ?></td>
                         <td><?= htmlspecialchars($o['nome_vendedor'] ?? 'Sistema') ?></td>
-                        <td><strong>R$ <?= number_format($o['valor_total'], 2, ',', '.') ?></strong></td>
+                        <td><strong>R$ <?= number_format($o['valor_total'] ?? 0, 2, ',', '.') ?></strong></td>
                         <td>
                             <span class="badge-status <?= $class ?>">
                                 <?= strtoupper($status_label) ?>

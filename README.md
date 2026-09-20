@@ -58,8 +58,9 @@ Projeto pessoal, também utilizado como Trabalho de Conclusão de Curso (TCC).
 ├── assents/           # CSS, JS e imagens (assets)
 ├── migrations/        # Scripts SQL para criar/corrigir tabelas
 ├── *.php (raiz)       # Páginas do sistema (uma por funcionalidade)
-├── .env               # Credenciais do banco (não versionado)
 └── .env.example       # Modelo do .env
+
+../.env                # Credenciais do banco — fica FORA desta pasta, um nível acima
 ```
 
 Nível de acesso de cada página é sempre checado no próprio arquivo PHP (`$_SESSION['nivel']`), nunca só escondido no menu.
@@ -73,7 +74,9 @@ Nível de acesso de cada página é sempre checado no próprio arquivo PHP (`$_S
 - Token CSRF em todos os formulários e chamadas `fetch()` que alteram dados
 - Bloqueio por tentativas de login (5 tentativas / 1 minuto)
 - Sessão com cookies `HttpOnly`, `SameSite` e `Secure` (quando em HTTPS)
+- Nível de acesso e status (ativo/inativo) do usuário são revalidados contra o banco a cada requisição — desativar ou rebaixar uma conta encerra o acesso dela na hora, sem precisar esperar o logout
 - Preço e estoque de uma venda **sempre revalidados no servidor** contra o banco — nunca aceita o valor que o navegador enviar
+- `.env` fica fora da pasta pública do site (um nível acima), e `.htaccess`/`web.config` bloqueiam acesso direto a `.git`, `migrations/` e outros arquivos internos
 - Log de auditoria das ações mais sensíveis
 
 ---
@@ -92,7 +95,7 @@ Nível de acesso de cada página é sempre checado no próprio arquivo PHP (`$_S
    git clone https://github.com/LucasRonzellaAmado/Erp_System.git
    ```
 
-2. Copie `.env.example` para `.env` e preencha os dados do seu banco:
+2. Copie `.env.example` para `.env`, preencha os dados do seu banco e coloque o arquivo **um nível acima** da pasta do projeto (fora da raiz servida pelo site, para nunca ficar acessível pelo navegador):
    ```
    DB_HOST=localhost
    DB_USER=usuario_do_banco
@@ -100,6 +103,7 @@ Nível de acesso de cada página é sempre checado no próprio arquivo PHP (`$_S
    DB_NAME=erp
    DB_PORT=3306
    ```
+   Ou seja, se o projeto está em `/var/www/meu-erp/`, o `.env` deve ficar em `/var/www/.env`.
 
 3. Rode as migrações no seu banco (crie o schema base do ERP conforme seu ambiente e, em seguida, rode o script consolidado deste projeto):
    ```

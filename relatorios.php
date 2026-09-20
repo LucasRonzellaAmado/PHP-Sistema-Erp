@@ -164,9 +164,9 @@ $RELATORIOS = [
                     <tbody>
                         <?php while ($c = $res_categorias->fetch_assoc()): ?>
                         <tr>
-                            <td><?= htmlspecialchars($c['categoria']) ?></td>
-                            <td><?= number_format($c['qtd_total'], 2, ',', '.') ?></td>
-                            <td>R$ <?= number_format($c['valor_custo'], 2, ',', '.') ?></td>
+                            <td><?= htmlspecialchars($c['categoria'] ?? 'Sem Categoria') ?></td>
+                            <td><?= number_format($c['qtd_total'] ?? 0, 2, ',', '.') ?></td>
+                            <td>R$ <?= number_format($c['valor_custo'] ?? 0, 2, ',', '.') ?></td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>
