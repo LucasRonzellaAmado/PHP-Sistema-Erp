@@ -28,11 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     tipo_pessoa, razao_social, nome, nome_fantasia, documento, 
                     celular, email, contato_responsavel, cep, rua, numero, 
                     bairro, cidade, estado, tipo_fornecimento, prazo_entrega_medio, 
-                    usuario_cadastrou, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Ativo')";
+                    usuario_cadastrou, status, empresa_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Ativo', ?)";
         
         $stmt = $mysql->prepare($sql);
-        $stmt->bind_param("sssssssssssssssii",
+        $stmt->bind_param("sssssssssssssssiii",
             $_POST['tipo_pessoa'], 
             $_POST['razao_social'], 
             $_POST['razao_social'],
@@ -49,14 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_POST['estado'], 
             $_POST['tipo_fornecimento'], 
             $prazo, 
-            $user_id
+            $user_id,
+            $_SESSION['empresa_id']
         );
         $stmt->execute();
         $id_f = $mysql->insert_id;
 
-        $sql_c = "INSERT INTO fornecedor_contas (id_fornecedor, banco, agencia, conta, chave_pix) VALUES (?, ?, ?, ?, ?)";
+        $sql_c = "INSERT INTO fornecedor_contas (id_fornecedor, banco, agencia, conta, chave_pix, empresa_id) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt_c = $mysql->prepare($sql_c);
-        $stmt_c->bind_param("issss", $id_f, $_POST['banco'], $_POST['agencia'], $_POST['conta'], $_POST['chave_pix']);
+        $stmt_c->bind_param("issssi", $id_f, $_POST['banco'], $_POST['agencia'], $_POST['conta'], $_POST['chave_pix'], $_SESSION['empresa_id']);
         $stmt_c->execute();
 
         $mysql->commit();

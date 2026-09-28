@@ -18,7 +18,7 @@ function limparValor($valor) {
 $sql_caixa = "SELECT c.*, u.nome as nome_abertura 
               FROM controle_caixas c 
               LEFT JOIN usuarios u ON c.usuario_id = u.id 
-              WHERE c.status = 'Aberto' 
+              WHERE c.status = 'Aberto' AND c.empresa_id = " . (int)$_SESSION['empresa_id'] . " 
               LIMIT 1";
 
 $res_caixa = $mysql->query($sql_caixa);
@@ -30,8 +30,8 @@ if (isset($_POST['abrir_caixa'])) {
     $valor_inicial = limparValor($_POST['valor_inicial']);
     $data_abertura = date('Y-m-d H:i:s');
 
-    $stmt = $mysql->prepare("INSERT INTO controle_caixas (usuario_id, valor_inicial, status, data_abertura) VALUES (?, ?, 'Aberto', ?)");
-    $stmt->bind_param("ids", $usuario_id, $valor_inicial, $data_abertura);
+    $stmt = $mysql->prepare("INSERT INTO controle_caixas (usuario_id, valor_inicial, status, data_abertura, empresa_id) VALUES (?, ?, 'Aberto', ?, ?)");
+    $stmt->bind_param("idsi", $usuario_id, $valor_inicial, $data_abertura, $_SESSION['empresa_id']);
     $stmt->execute();
     registrar_log($mysql, 'abrir_caixa', 'controle_caixas', $mysql->insert_id, "Valor inicial: R$ " . number_format($valor_inicial, 2, ',', '.'));
 
@@ -48,9 +48,9 @@ if (isset($_POST['movimentar']) && $caixa_aberto) {
     $valor = limparValor($_POST['valor_mov']);
     $obs = $_POST['obs_mov'] ?? '';
 
-    $stmt_mov = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, valor, observacao, forma_pagamento)
-                VALUES (?, ?, ?, ?, ?, 'Dinheiro')");
-    $stmt_mov->bind_param("issds", $caixa_id, $tipo, $origem, $valor, $obs);
+    $stmt_mov = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, valor, observacao, forma_pagamento, empresa_id)
+                VALUES (?, ?, ?, ?, ?, 'Dinheiro', ?)");
+    $stmt_mov->bind_param("issdsi", $caixa_id, $tipo, $origem, $valor, $obs, $_SESSION['empresa_id']);
 
     if ($stmt_mov->execute()) {
         registrar_log($mysql, 'movimentacao_caixa_manual', 'movimentacoes_caixa', $mysql->insert_id, "$tipo: R$ " . number_format($valor, 2, ',', '.') . " - $obs");
@@ -62,7 +62,7 @@ if (isset($_POST['movimentar']) && $caixa_aberto) {
 $saldo_atual = 0;
 if ($caixa_aberto) {
     $cid = $caixa_aberto['id'];
-    $res_soma = $mysql->query("SELECT SUM(CASE WHEN tipo = 'ENTRADA' THEN valor ELSE -valor END) as saldo FROM movimentacoes_caixa WHERE caixa_id = $cid");
+    $res_soma = $mysql->query("SELECT SUM(CASE WHEN tipo = 'ENTRADA' THEN valor ELSE -valor END) as saldo FROM movimentacoes_caixa WHERE caixa_id = $cid AND empresa_id = " . (int)$_SESSION['empresa_id']);
     $soma = $res_soma->fetch_assoc();
     $saldo_atual = (float)$caixa_aberto['valor_inicial'] + (float)($soma['saldo'] ?? 0);
 }
@@ -166,7 +166,7 @@ if ($caixa_aberto) {
                 </thead>
                 <tbody>
                     <?php
-                    $res_logs = $mysql->query("SELECT * FROM movimentacoes_caixa WHERE caixa_id = {$caixa_aberto['id']} ORDER BY id DESC LIMIT 5");
+                    $res_logs = $mysql->query("SELECT * FROM movimentacoes_caixa WHERE caixa_id = {$caixa_aberto['id']} AND empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY id DESC LIMIT 5");
                     while($m = $res_logs->fetch_assoc()):
                         $cor = ($m['tipo'] == 'ENTRADA') ? '#10b981' : '#ef4444';
                     ?>

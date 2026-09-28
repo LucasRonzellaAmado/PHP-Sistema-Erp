@@ -13,12 +13,12 @@ $busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
 
 if ($busca !== '') {
     $like = "%$busca%";
-    $stmt = $mysql->prepare("SELECT id, usuario, nome, nivel, status FROM usuarios WHERE nome LIKE ? OR usuario LIKE ? ORDER BY nome ASC");
-    $stmt->bind_param("ss", $like, $like);
+    $stmt = $mysql->prepare("SELECT id, usuario, nome, nivel, status FROM usuarios WHERE empresa_id = ? AND (nome LIKE ? OR usuario LIKE ?) ORDER BY nome ASC");
+    $stmt->bind_param("iss", $_SESSION['empresa_id'], $like, $like);
     $stmt->execute();
     $res = $stmt->get_result();
 } else {
-    $res = $mysql->query("SELECT id, usuario, nome, nivel, status FROM usuarios ORDER BY nome ASC");
+    $res = $mysql->query("SELECT id, usuario, nome, nivel, status FROM usuarios WHERE empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY nome ASC");
 }
 
 $NIVEIS_LABEL = [

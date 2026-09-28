@@ -8,8 +8,8 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'adm
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$stmt_nf = $mysql->prepare("SELECT * FROM notas_fiscais WHERE id = ?");
-$stmt_nf->bind_param("i", $id);
+$stmt_nf = $mysql->prepare("SELECT * FROM notas_fiscais WHERE id = ? AND empresa_id = ?");
+$stmt_nf->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_nf->execute();
 $nf = $stmt_nf->get_result()->fetch_assoc();
 
@@ -17,8 +17,8 @@ if (!$nf) {
     exit("<p>Nota Fiscal não encontrada.</p>");
 }
 
-$stmt_itens = $mysql->prepare("SELECT * FROM nota_fiscal_itens WHERE nota_id = ?");
-$stmt_itens->bind_param("i", $id);
+$stmt_itens = $mysql->prepare("SELECT * FROM nota_fiscal_itens WHERE nota_id = ? AND empresa_id = ?");
+$stmt_itens->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_itens->execute();
 $res_itens = $stmt_itens->get_result();
 ?>

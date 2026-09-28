@@ -10,9 +10,9 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'adm
 $filtro_status = $_GET['status'] ?? '';
 $filtro_cliente = $_GET['cliente'] ?? '';
 
-$sql = "SELECT * FROM notas_fiscais WHERE 1=1";
-$params = [];
-$types = "";
+$sql = "SELECT * FROM notas_fiscais WHERE empresa_id = ?";
+$params = [$_SESSION['empresa_id']];
+$types = "i";
 if ($filtro_status !== '') {
     $sql .= " AND status = ?";
     $params[] = $filtro_status;

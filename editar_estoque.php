@@ -14,8 +14,8 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'est
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($id > 0) {
-    $stmt_get = $mysql->prepare("SELECT * FROM estoque WHERE id = ?");
-    $stmt_get->bind_param("i", $id);
+    $stmt_get = $mysql->prepare("SELECT * FROM estoque WHERE id = ? AND empresa_id = ?");
+    $stmt_get->bind_param("ii", $id, $_SESSION['empresa_id']);
     $stmt_get->execute();
     $dados = $stmt_get->get_result()->fetch_assoc();
 }
@@ -63,17 +63,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_atualizar'])) {
         qtd_fornecedor=?, ncm=?, cfop=?, subcategoria=?, marca=?, modelo=?,
         preco_venda_minimo=?, cst_csosn=?, origem_produto=?, pis_aliquota=?,
         cofins_aliquota=?, ponto_reposicao=?, data_validade=?, lote=?
-        WHERE id = ?");
+        WHERE id = ? AND empresa_id = ?");
 
     $stmt->bind_param(
-        "ssissdddddssdddiisssssisssssdsiddissi",
+        "ssissdddddssdddiisssssisssssdsiddissii",
         $d['nome'], $d['descricao'], $d['quantidade'], $d['codigo_produto'], $d['unidade'], $d['preco_custo'],
         $d['ipi'], $d['substituicao_tributaria'], $d['margem_lucro'], $d['preco_venda'], $d['fornecedor'],
         $d['localizacao'], $d['peso'], $d['volume'], $d['frete'], $d['qtd_maxima'], $d['qtd_minima'],
         $d['codigo_barras'], $d['categoria'], $d['fabricante'], $status, $d['codigo_produto_fornecedor'],
         $d['qtd_fornecedor'], $d['ncm'], $d['cfop'], $d['subcategoria'], $d['marca'], $d['modelo'],
         $d['preco_venda_minimo'], $d['cst_csosn'], $origem_produto, $d['pis_aliquota'],
-        $d['cofins_aliquota'], $d['ponto_reposicao'], $d['data_validade'], $d['lote'], $id
+        $d['cofins_aliquota'], $d['ponto_reposicao'], $d['data_validade'], $d['lote'], $id, $_SESSION['empresa_id']
     );
 
     if ($stmt->execute()) {
@@ -83,8 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_atualizar'])) {
     error_log("editar_estoque.php: " . $mysql->error);
 }
 
-$res_categorias = $mysql->query("SELECT nome FROM categorias WHERE status = 1 ORDER BY nome ASC");
-$res_marcas = $mysql->query("SELECT nome FROM marcas WHERE status = 1 ORDER BY nome ASC");
+$eid = (int)$_SESSION['empresa_id'];
+$res_categorias = $mysql->query("SELECT nome FROM categorias WHERE status = 1 AND empresa_id = $eid ORDER BY nome ASC");
+$res_marcas = $mysql->query("SELECT nome FROM marcas WHERE status = 1 AND empresa_id = $eid ORDER BY nome ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

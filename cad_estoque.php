@@ -27,9 +27,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($nome === '') {
         $erro = 'Informe o nome do produto.';
     } else {
-        $stmt = $mysql->prepare("INSERT INTO estoque (nome, codigo_produto, codigo_barras, categoria, marca, unidade, preco_custo, preco_venda, quantidade, qtd_minima, id_fornecedor, status)
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO')");
-        $stmt->bind_param("ssssssddiii", $nome, $codigo_produto, $codigo_barras, $categoria, $marca, $unidade, $preco_custo, $preco_venda, $quantidade, $qtd_minima, $id_fornecedor);
+        if ($id_fornecedor !== null) {
+            $stmt_forn = $mysql->prepare("SELECT id FROM fornecedores WHERE id = ? AND empresa_id = ?");
+            $stmt_forn->bind_param("ii", $id_fornecedor, $_SESSION['empresa_id']);
+            $stmt_forn->execute();
+            if (!$stmt_forn->get_result()->fetch_assoc()) {
+                $id_fornecedor = null;
+            }
+        }
+
+        $stmt = $mysql->prepare("INSERT INTO estoque (nome, codigo_produto, codigo_barras, categoria, marca, unidade, preco_custo, preco_venda, quantidade, qtd_minima, id_fornecedor, status, empresa_id)
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ATIVO', ?)");
+        $stmt->bind_param("ssssssddiiii", $nome, $codigo_produto, $codigo_barras, $categoria, $marca, $unidade, $preco_custo, $preco_venda, $quantidade, $qtd_minima, $id_fornecedor, $_SESSION['empresa_id']);
 
         if ($stmt->execute()) {
             header("Location: estoque.php?sucesso_edit=1");
@@ -40,9 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 'Ativo' ORDER BY razao_social ASC");
-$res_categorias = $mysql->query("SELECT nome FROM categorias WHERE status = 1 ORDER BY nome ASC");
-$res_marcas = $mysql->query("SELECT nome FROM marcas WHERE status = 1 ORDER BY nome ASC");
+$eid = (int)$_SESSION['empresa_id'];
+$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 'Ativo' AND empresa_id = $eid ORDER BY razao_social ASC");
+$res_categorias = $mysql->query("SELECT nome FROM categorias WHERE status = 1 AND empresa_id = $eid ORDER BY nome ASC");
+$res_marcas = $mysql->query("SELECT nome FROM marcas WHERE status = 1 AND empresa_id = $eid ORDER BY nome ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

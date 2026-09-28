@@ -37,7 +37,7 @@ if (!in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
     exit;
 }
 
-$res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pagamento WHERE status = 1 ORDER BY id ASC");
+$res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pagamento WHERE status = 1 AND empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY id ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -103,7 +103,7 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
                     <div class="cliente-input-group">
                         <input type="number" id="busca_id_cliente" placeholder="ID" oninput="buscarClientePorId(this.value)">
                         <select id="id_cliente" style="width: 100%">
-                            <option value="1">Consumidor Final</option>
+                            <option value="<?= (int)$_SESSION['cliente_avulso_id'] ?>">Consumidor Final</option>
                         </select>
                     </div>
                 </section>
@@ -207,6 +207,7 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
     </div>
 </div>
 
+<script>window.CLIENTE_AVULSO_ID = <?= json_encode((string)(int)$_SESSION['cliente_avulso_id']) ?>;</script>
 <script src="assents/pdv_venda.js"></script>
 <script>
 $(document).ready(function() {

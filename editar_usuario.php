@@ -18,8 +18,8 @@ if ($id <= 0) {
     exit;
 }
 
-$stmt = $mysql->prepare("SELECT id, usuario, nome, nivel, status FROM usuarios WHERE id = ?");
-$stmt->bind_param("i", $id);
+$stmt = $mysql->prepare("SELECT id, usuario, nome, nivel, status FROM usuarios WHERE id = ? AND empresa_id = ?");
+$stmt->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt->execute();
 $dados = $stmt->get_result()->fetch_assoc();
 
@@ -59,11 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         if ($nova_senha !== '') {
             $hash = password_hash($nova_senha, PASSWORD_DEFAULT);
-            $stmt_u = $mysql->prepare("UPDATE usuarios SET nome = ?, nivel = ?, status = ?, senha = ? WHERE id = ?");
-            $stmt_u->bind_param("ssssi", $nome, $nivel_novo, $status_novo, $hash, $id);
+            $stmt_u = $mysql->prepare("UPDATE usuarios SET nome = ?, nivel = ?, status = ?, senha = ? WHERE id = ? AND empresa_id = ?");
+            $stmt_u->bind_param("ssssii", $nome, $nivel_novo, $status_novo, $hash, $id, $_SESSION['empresa_id']);
         } else {
-            $stmt_u = $mysql->prepare("UPDATE usuarios SET nome = ?, nivel = ?, status = ? WHERE id = ?");
-            $stmt_u->bind_param("sssi", $nome, $nivel_novo, $status_novo, $id);
+            $stmt_u = $mysql->prepare("UPDATE usuarios SET nome = ?, nivel = ?, status = ? WHERE id = ? AND empresa_id = ?");
+            $stmt_u->bind_param("sssii", $nome, $nivel_novo, $status_novo, $id, $_SESSION['empresa_id']);
         }
 
         if ($stmt_u->execute()) {

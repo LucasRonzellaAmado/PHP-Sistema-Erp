@@ -11,11 +11,14 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'est
     exit;
 }
 
-$busca = isset($_GET['busca']) ? $mysql->real_escape_string($_GET['busca']) : '';
-$where = !empty($busca) ? "WHERE nome LIKE '%$busca%' OR codigo_produto LIKE '%$busca%' OR codigo_barras LIKE '%$busca%'" : "";
+$busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
+$like = '%' . $busca . '%';
 
-$sql = "SELECT id, nome, codigo_produto, quantidade, qtd_minima, preco_venda, categoria, status FROM estoque $where ORDER BY nome ASC";
-$res = $mysql->query($sql);
+$stmt_lista = $mysql->prepare("SELECT id, nome, codigo_produto, quantidade, qtd_minima, preco_venda, categoria, status FROM estoque
+    WHERE empresa_id = ? AND (? = '' OR nome LIKE ? OR codigo_produto LIKE ? OR codigo_barras LIKE ?) ORDER BY nome ASC");
+$stmt_lista->bind_param("issss", $_SESSION['empresa_id'], $busca, $like, $like, $like);
+$stmt_lista->execute();
+$res = $stmt_lista->get_result();
 
 $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : "";
 ?>

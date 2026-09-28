@@ -16,8 +16,8 @@ if ($codigo === '') {
     exit;
 }
 
-$stmt = $mysql->prepare("SELECT id, nome, CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda, quantidade FROM estoque WHERE codigo_barras = ? AND status = 'ATIVO' LIMIT 1");
-$stmt->bind_param("s", $codigo);
+$stmt = $mysql->prepare("SELECT id, nome, CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda, quantidade FROM estoque WHERE codigo_barras = ? AND status = 'ATIVO' AND empresa_id = ? LIMIT 1");
+$stmt->bind_param("si", $codigo, $_SESSION['empresa_id']);
 $stmt->execute();
 $res = $stmt->get_result();
 $produto = $res->fetch_assoc();

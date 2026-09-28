@@ -7,7 +7,7 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'est
     exit;
 }
 
-$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 'Ativo' ORDER BY razao_social ASC");
+$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 'Ativo' AND empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY razao_social ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

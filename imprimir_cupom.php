@@ -10,15 +10,15 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'ven
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id <= 0) exit("Venda não encontrada");
 
-$stmt_venda = $mysql->prepare("SELECT v.*, u.nome as vendedor FROM vendas v LEFT JOIN usuarios u ON v.usuario_id = u.id WHERE v.id = ?");
-$stmt_venda->bind_param("i", $id);
+$stmt_venda = $mysql->prepare("SELECT v.*, u.nome as vendedor FROM vendas v LEFT JOIN usuarios u ON v.usuario_id = u.id WHERE v.id = ? AND v.empresa_id = ?");
+$stmt_venda->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_venda->execute();
 $venda = $stmt_venda->get_result()->fetch_assoc();
 
 if (!$venda) exit("Venda inexistente");
 
-$stmt_itens = $mysql->prepare("SELECT vi.quantidade, vi.preco_unitario, vi.valor_total_item, e.nome AS produto_nome FROM venda_itens vi LEFT JOIN estoque e ON vi.id_produto = e.id WHERE vi.id_venda = ?");
-$stmt_itens->bind_param("i", $id);
+$stmt_itens = $mysql->prepare("SELECT vi.quantidade, vi.preco_unitario, vi.valor_total_item, e.nome AS produto_nome FROM venda_itens vi LEFT JOIN estoque e ON vi.id_produto = e.id WHERE vi.id_venda = ? AND vi.empresa_id = ?");
+$stmt_itens->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_itens->execute();
 $itens = $stmt_itens->get_result();
 ?>

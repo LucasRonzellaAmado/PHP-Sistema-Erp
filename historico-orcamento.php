@@ -13,9 +13,9 @@ $status_filtro = $_GET['status'] ?? '';
 $data_inicio = $_GET['inicio'] ?? '';
 $data_fim = $_GET['fim'] ?? '';
 
-$condicoes = [];
-$params = [];
-$types = "";
+$condicoes = ["o.empresa_id = ?"];
+$params = [$_SESSION['empresa_id']];
+$types = "i";
 if ($status_filtro !== '') { $condicoes[] = "o.status = ?"; $params[] = $status_filtro; $types .= "s"; }
 if ($data_inicio !== '')   { $condicoes[] = "o.data_emissao >= ?"; $params[] = $data_inicio; $types .= "s"; }
 if ($data_fim !== '')      { $condicoes[] = "o.data_emissao <= ?"; $params[] = $data_fim; $types .= "s"; }
@@ -25,7 +25,7 @@ $where = count($condicoes) > 0 ? "WHERE " . implode(" AND ", $condicoes) : "";
 $sql = "SELECT o.*, u.nome as nome_vendedor, c.nome as nome_cliente
         FROM orcamentos o
         LEFT JOIN usuarios u ON o.usuario_id = u.id
-        LEFT JOIN clientes c ON o.id_cliente = c.id
+        LEFT JOIN clientes c ON o.id_cliente = c.id AND c.empresa_id = o.empresa_id
         $where
         ORDER BY o.id DESC";
 

@@ -2,15 +2,17 @@
 require_once 'include/auth.php';
 require_once 'include/conexao.php';
 
+$eid = (int)$_SESSION['empresa_id'];
+
 // 1. Resumo Financeiro do Dia
-$vendas_hoje = $mysql->query("SELECT SUM(valor_total) as total FROM vendas WHERE data_venda >= CURDATE() AND data_venda < CURDATE() + INTERVAL 1 DAY")->fetch_assoc();
+$vendas_hoje = $mysql->query("SELECT SUM(valor_total) as total FROM vendas WHERE data_venda >= CURDATE() AND data_venda < CURDATE() + INTERVAL 1 DAY AND empresa_id = $eid")->fetch_assoc();
 $total_vendas = $vendas_hoje['total'] ?? 0;
 
 // 2. Alertas de Estoque
-$estoque_baixo = $mysql->query("SELECT COUNT(*) as total FROM estoque WHERE quantidade <= qtd_minima AND status = 'ATIVO'")->fetch_assoc();
+$estoque_baixo = $mysql->query("SELECT COUNT(*) as total FROM estoque WHERE quantidade <= qtd_minima AND status = 'ATIVO' AND empresa_id = $eid")->fetch_assoc();
 
 // 3. Orçamentos Pendentes
-$orc_res = $mysql->query("SELECT COUNT(*) as total FROM orcamentos WHERE status = 'Pendente'")->fetch_assoc();
+$orc_res = $mysql->query("SELECT COUNT(*) as total FROM orcamentos WHERE status = 'Pendente' AND empresa_id = $eid")->fetch_assoc();
 $total_orc_pendentes = $orc_res['total'] ?? 0;
 
 // 3b. Financeiro (só para gerente/admin)
@@ -18,9 +20,9 @@ $mostra_financeiro = in_array(strtolower($_SESSION['nivel'] ?? ''), ['gerente', 
 $total_a_pagar_vencido = 0;
 $total_a_receber_vencido = 0;
 if ($mostra_financeiro) {
-    $r1 = $mysql->query("SELECT COALESCE(SUM(valor),0) as total FROM contas_pagar WHERE status = 'Pendente' AND data_vencimento < CURDATE()")->fetch_assoc();
+    $r1 = $mysql->query("SELECT COALESCE(SUM(valor),0) as total FROM contas_pagar WHERE status = 'Pendente' AND data_vencimento < CURDATE() AND empresa_id = $eid")->fetch_assoc();
     $total_a_pagar_vencido = (float)$r1['total'];
-    $r2 = $mysql->query("SELECT COALESCE(SUM(valor),0) as total FROM contas_receber WHERE status = 'Pendente' AND data_vencimento < CURDATE()")->fetch_assoc();
+    $r2 = $mysql->query("SELECT COALESCE(SUM(valor),0) as total FROM contas_receber WHERE status = 'Pendente' AND data_vencimento < CURDATE() AND empresa_id = $eid")->fetch_assoc();
     $total_a_receber_vencido = (float)$r2['total'];
 }
 
@@ -30,7 +32,7 @@ $valores = [];
 $faturamento_por_dia = [];
 $res_fat = $mysql->query("SELECT DATE(data_venda) as dia, SUM(valor_total) as total
                            FROM vendas
-                           WHERE data_venda >= CURDATE() - INTERVAL 6 DAY
+                           WHERE data_venda >= CURDATE() - INTERVAL 6 DAY AND empresa_id = $eid
                            GROUP BY DATE(data_venda)");
 while ($row = $res_fat->fetch_assoc()) {
     $faturamento_por_dia[$row['dia']] = (float)$row['total'];
@@ -42,7 +44,7 @@ for ($i = 6; $i >= 0; $i--) {
 }
 
 // 5. Lógica do Gráfico de Rosca (Status Orçamentos)
-$stats_res = $mysql->query("SELECT status, COUNT(*) as qtd FROM orcamentos GROUP BY status");
+$stats_res = $mysql->query("SELECT status, COUNT(*) as qtd FROM orcamentos WHERE empresa_id = $eid GROUP BY status");
 $status_labels = [];
 $status_qtds = [];
 while($row = $stats_res->fetch_assoc()){

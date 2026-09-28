@@ -13,8 +13,8 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $csrf_ok = isset($_GET['csrf']) && !empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $_GET['csrf']);
 
 if ($id > 0 && $csrf_ok && $id != $_SESSION['id']) {
-    $stmt = $mysql->prepare("SELECT nivel, status FROM usuarios WHERE id = ?");
-    $stmt->bind_param("i", $id);
+    $stmt = $mysql->prepare("SELECT nivel, status FROM usuarios WHERE id = ? AND empresa_id = ?");
+    $stmt->bind_param("ii", $id, $_SESSION['empresa_id']);
     $stmt->execute();
     $alvo = $stmt->get_result()->fetch_assoc();
 
@@ -29,7 +29,8 @@ if ($id > 0 && $csrf_ok && $id != $_SESSION['id']) {
 
         // Não deixa desativar o último administrador ativo do sistema
         if ($vai_desativar && strtolower($alvo['nivel']) === 'admin') {
-            $stmt_count = $mysql->prepare("SELECT COUNT(*) as total FROM usuarios WHERE nivel = 'admin' AND status = 1");
+            $stmt_count = $mysql->prepare("SELECT COUNT(*) as total FROM usuarios WHERE nivel = 'admin' AND status = 1 AND empresa_id = ?");
+            $stmt_count->bind_param("i", $_SESSION['empresa_id']);
             $stmt_count->execute();
             $total_admins = $stmt_count->get_result()->fetch_assoc()['total'];
             $bloqueado = $total_admins <= 1;
@@ -37,8 +38,8 @@ if ($id > 0 && $csrf_ok && $id != $_SESSION['id']) {
 
         if (!$bloqueado) {
             $novo_status = $vai_desativar ? '0' : '1';
-            $stmt_up = $mysql->prepare("UPDATE usuarios SET status = ? WHERE id = ?");
-            $stmt_up->bind_param("si", $novo_status, $id);
+            $stmt_up = $mysql->prepare("UPDATE usuarios SET status = ? WHERE id = ? AND empresa_id = ?");
+            $stmt_up->bind_param("sii", $novo_status, $id, $_SESSION['empresa_id']);
             $stmt_up->execute();
             registrar_log($mysql, $vai_desativar ? 'desativar_usuario' : 'reativar_usuario', 'usuarios', $id);
         }

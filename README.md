@@ -115,10 +115,9 @@ Nível de acesso de cada página é sempre checado no próprio arquivo PHP (`$_S
    - **Teste rápido local**: `php -S localhost:8000` na raiz do projeto e acesse `http://localhost:8000/login.php`
    - **Apache/XAMPP/WAMP**: copie a pasta do projeto para o diretório do servidor (ex.: `C:\wamp64\www\`) e acesse `http://localhost/PHP-Sistema-Erp/login.php`
 
-5. Garanta que existe pelo menos um usuário `admin` na tabela `usuarios` (necessário para criar os demais usuários pela tela). Se precisar promover um usuário existente:
-   ```sql
-   UPDATE usuarios SET nivel = 'admin' WHERE usuario = 'seu_login';
-   ```
+4b. Rode também `migrations/007_multi_tenant.sql` (multi-empresa). Ela cria a tabela `empresas`, adiciona `empresa_id` em todas as tabelas de negócio e promove o usuário `admin` (id 1) a `super_admin`.
+
+5. Multi-empresa: o usuário `super_admin` só enxerga a tela **Empresas**, onde cadastra cada empresa nova (dados + login/senha do admin dela); o sistema cria sozinho as formas de pagamento padrão e o cliente "Consumidor Final" da empresa. Cada empresa enxerga apenas os próprios dados. O login (`usuarios.usuario`) é único no sistema inteiro.
 
 ---
 
@@ -128,7 +127,7 @@ Este sistema **não é** um substituto para um ERP fiscal/contábil completo. Fi
 - Emissão real de nota fiscal eletrônica (exige certificado digital + provedor homologado com a SEFAZ)
 - Folha de pagamento / RH
 - Contabilidade formal (livros fiscais, SPED)
-- Multi-filial / múltiplas empresas
+- Multi-filial (várias lojas de uma mesma empresa compartilhando estoque)
 
 ---
 

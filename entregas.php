@@ -15,8 +15,8 @@ $sql = "SELECT v.id, v.data_venda, v.status_entrega, v.valor_total,
                c.nome as cliente_nome, c.telefone
         FROM vendas v
         JOIN venda_entregas e ON v.id = e.id_venda
-        LEFT JOIN clientes c ON v.id_cliente = c.id
-        WHERE $where
+        LEFT JOIN clientes c ON v.id_cliente = c.id AND c.empresa_id = v.empresa_id
+        WHERE v.empresa_id = " . (int)$_SESSION['empresa_id'] . " AND $where
         ORDER BY v.data_venda DESC";
 
 $res = $mysql->query($sql);

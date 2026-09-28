@@ -19,8 +19,8 @@ if ($id <= 0) {
     exit;
 }
 
-$stmt = $mysql->prepare("UPDATE contas_pagar SET status = 'Pago', data_pagamento = NOW() WHERE id = ? AND status = 'Pendente'");
-$stmt->bind_param("i", $id);
+$stmt = $mysql->prepare("UPDATE contas_pagar SET status = 'Pago', data_pagamento = NOW() WHERE id = ? AND status = 'Pendente' AND empresa_id = ?");
+$stmt->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt->execute();
 
 if ($stmt->affected_rows === 0) {

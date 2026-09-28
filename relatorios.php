@@ -66,10 +66,10 @@ $RELATORIOS = [
                     FROM venda_itens vi
                     JOIN vendas v ON vi.id_venda = v.id
                     LEFT JOIN estoque e ON vi.id_produto = e.id
-                    WHERE v.data_venda BETWEEN ? AND ?
+                    WHERE v.data_venda BETWEEN ? AND ? AND v.empresa_id = ?
                     GROUP BY e.id, e.nome
                     ORDER BY valor_vendido DESC");
-                $stmt->bind_param("ss", $inicio_periodo, $fim_periodo);
+                $stmt->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
                 $stmt->execute();
                 $produtos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 $total_geral = array_sum(array_column($produtos, 'valor_vendido'));
@@ -105,10 +105,10 @@ $RELATORIOS = [
                 $stmt = $mysql->prepare("SELECT u.id, u.nome, COUNT(DISTINCT v.id) as qtd_vendas, SUM(v.valor_total) as total_vendido
                     FROM vendas v
                     JOIN usuarios u ON v.usuario_id = u.id
-                    WHERE v.data_venda BETWEEN ? AND ?
+                    WHERE v.data_venda BETWEEN ? AND ? AND v.empresa_id = ?
                     GROUP BY u.id, u.nome
                     ORDER BY total_vendido DESC");
-                $stmt->bind_param("ss", $inicio_periodo, $fim_periodo);
+                $stmt->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
                 $stmt->execute();
                 $vendedores = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 ?>
@@ -147,12 +147,12 @@ $RELATORIOS = [
             <?php elseif ($relatorio === 'estoque'): ?>
                 <?php
                 $res_valor = $mysql->query("SELECT COUNT(*) as total_produtos, SUM(quantidade * preco_custo) as valor_custo, SUM(quantidade * preco_venda) as valor_venda
-                    FROM estoque WHERE status = 1");
+                    FROM estoque WHERE status = 1 AND empresa_id = " . (int)$_SESSION['empresa_id']);
                 $resumo = $res_valor->fetch_assoc();
 
                 $res_categorias = $mysql->query("SELECT COALESCE(NULLIF(categoria,''), 'Sem categoria') as categoria,
                     SUM(quantidade * preco_custo) as valor_custo, SUM(quantidade) as qtd_total
-                    FROM estoque WHERE status = 1 GROUP BY categoria ORDER BY valor_custo DESC");
+                    FROM estoque WHERE status = 1 AND empresa_id = " . (int)$_SESSION['empresa_id'] . " GROUP BY categoria ORDER BY valor_custo DESC");
                 ?>
                 <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:15px; margin-bottom:20px;">
                     <div class="card-erp"><span style="font-size:12px; color:#64748b;">PRODUTOS ATIVOS</span><h3><?= (int)$resumo['total_produtos'] ?></h3></div>
@@ -176,12 +176,12 @@ $RELATORIOS = [
                 <?php
                 $stmt = $mysql->prepare("SELECT c.id, c.nome, COUNT(v.id) as qtd_compras, SUM(v.valor_total) as total_comprado
                     FROM vendas v
-                    JOIN clientes c ON v.id_cliente = c.id
-                    WHERE v.data_venda BETWEEN ? AND ?
+                    JOIN clientes c ON v.id_cliente = c.id AND c.empresa_id = v.empresa_id
+                    WHERE v.data_venda BETWEEN ? AND ? AND v.empresa_id = ?
                     GROUP BY c.id, c.nome
                     ORDER BY total_comprado DESC
                     LIMIT 30");
-                $stmt->bind_param("ss", $inicio_periodo, $fim_periodo);
+                $stmt->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
                 $stmt->execute();
                 $clientes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 ?>
@@ -205,8 +205,8 @@ $RELATORIOS = [
 
             <?php elseif ($relatorio === 'dre'): ?>
                 <?php
-                $stmt_receita = $mysql->prepare("SELECT COALESCE(SUM(valor_total),0) as total FROM vendas WHERE data_venda BETWEEN ? AND ?");
-                $stmt_receita->bind_param("ss", $inicio_periodo, $fim_periodo);
+                $stmt_receita = $mysql->prepare("SELECT COALESCE(SUM(valor_total),0) as total FROM vendas WHERE data_venda BETWEEN ? AND ? AND empresa_id = ?");
+                $stmt_receita->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
                 $stmt_receita->execute();
                 $receita = (float)$stmt_receita->get_result()->fetch_assoc()['total'];
 
@@ -214,13 +214,13 @@ $RELATORIOS = [
                     FROM venda_itens vi
                     JOIN vendas v ON vi.id_venda = v.id
                     LEFT JOIN estoque e ON vi.id_produto = e.id
-                    WHERE v.data_venda BETWEEN ? AND ?");
-                $stmt_cmv->bind_param("ss", $inicio_periodo, $fim_periodo);
+                    WHERE v.data_venda BETWEEN ? AND ? AND v.empresa_id = ?");
+                $stmt_cmv->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
                 $stmt_cmv->execute();
                 $cmv = (float)$stmt_cmv->get_result()->fetch_assoc()['total'];
 
-                $stmt_desp = $mysql->prepare("SELECT COALESCE(SUM(valor),0) as total FROM contas_pagar WHERE status = 'Pago' AND data_pagamento BETWEEN ? AND ?");
-                $stmt_desp->bind_param("ss", $inicio_periodo, $fim_periodo);
+                $stmt_desp = $mysql->prepare("SELECT COALESCE(SUM(valor),0) as total FROM contas_pagar WHERE status = 'Pago' AND data_pagamento BETWEEN ? AND ? AND empresa_id = ?");
+                $stmt_desp->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
                 $stmt_desp->execute();
                 $despesas = (float)$stmt_desp->get_result()->fetch_assoc()['total'];
 

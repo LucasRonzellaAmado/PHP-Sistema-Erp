@@ -20,8 +20,8 @@ if ($id <= 0 || !in_array($novo_status, ['Aprovado', 'Cancelado'], true)) {
     exit;
 }
 
-$stmt = $mysql->prepare("UPDATE orcamentos SET status = ? WHERE id = ? AND status = 'Pendente'");
-$stmt->bind_param("si", $novo_status, $id);
+$stmt = $mysql->prepare("UPDATE orcamentos SET status = ? WHERE id = ? AND status = 'Pendente' AND empresa_id = ?");
+$stmt->bind_param("sii", $novo_status, $id, $_SESSION['empresa_id']);
 $stmt->execute();
 
 if ($stmt->affected_rows === 0) {

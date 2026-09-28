@@ -27,8 +27,9 @@ if ($id_orcamento <= 0) {
 $mysql->begin_transaction();
 
 try {
-    $stmt_orc = $mysql->prepare("SELECT id, id_cliente FROM orcamentos WHERE id = ? AND status = 'Pendente' FOR UPDATE");
-    $stmt_orc->bind_param("i", $id_orcamento);
+    $empresa_id = (int)$_SESSION['empresa_id'];
+    $stmt_orc = $mysql->prepare("SELECT id, id_cliente FROM orcamentos WHERE id = ? AND status = 'Pendente' AND empresa_id = ? FOR UPDATE");
+    $stmt_orc->bind_param("ii", $id_orcamento, $empresa_id);
     $stmt_orc->execute();
     $orcamento = $stmt_orc->get_result()->fetch_assoc();
 
@@ -36,8 +37,8 @@ try {
         throw new Exception("Orçamento não encontrado ou já finalizado.");
     }
 
-    $stmt_itens = $mysql->prepare("SELECT id_produto, quantidade FROM orcamento_itens WHERE id_orcamento = ?");
-    $stmt_itens->bind_param("i", $id_orcamento);
+    $stmt_itens = $mysql->prepare("SELECT id_produto, quantidade FROM orcamento_itens WHERE id_orcamento = ? AND empresa_id = ?");
+    $stmt_itens->bind_param("ii", $id_orcamento, $empresa_id);
     $stmt_itens->execute();
     $itens_orcamento = $stmt_itens->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -47,7 +48,7 @@ try {
 
     $usuario_id = $_SESSION['id'];
     $id_caixa = intval($_SESSION['id_caixa_atual'] ?? 1);
-    $id_cliente = intval($orcamento['id_cliente'] ?? 1);
+    $id_cliente = intval($orcamento['id_cliente'] ?? $_SESSION['cliente_avulso_id']);
 
     // Preço e estoque revalidados no momento da conversão (podem ter mudado desde a criação do orçamento)
     $itens_calculados = [];
@@ -57,8 +58,8 @@ try {
         $id_p = intval($item['id_produto']);
         $qtd = intval($item['quantidade']);
 
-        $stmt_p = $mysql->prepare("SELECT CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda, quantidade FROM estoque WHERE id = ? AND status = 'ATIVO' FOR UPDATE");
-        $stmt_p->bind_param("i", $id_p);
+        $stmt_p = $mysql->prepare("SELECT CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda, quantidade FROM estoque WHERE id = ? AND status = 'ATIVO' AND empresa_id = ? FOR UPDATE");
+        $stmt_p->bind_param("ii", $id_p, $empresa_id);
         $stmt_p->execute();
         $produto = $stmt_p->get_result()->fetch_assoc();
 
@@ -76,39 +77,39 @@ try {
         $itens_calculados[] = ['id' => $id_p, 'qtd' => $qtd, 'preco' => $preco_real, 'total' => $tot_item];
     }
 
-    $stmt_venda = $mysql->prepare("INSERT INTO vendas (id_cliente, usuario_id, id_caixa, valor_total, forma_pagamento, tipo_venda, status_entrega, data_venda)
-                  VALUES (?, ?, ?, ?, 'Dinheiro', 'Local', 'Pendente', NOW())");
-    $stmt_venda->bind_param("iiid", $id_cliente, $usuario_id, $id_caixa, $total);
+    $stmt_venda = $mysql->prepare("INSERT INTO vendas (id_cliente, usuario_id, id_caixa, valor_total, forma_pagamento, tipo_venda, status_entrega, data_venda, empresa_id)
+                  VALUES (?, ?, ?, ?, 'Dinheiro', 'Local', 'Pendente', NOW(), ?)");
+    $stmt_venda->bind_param("iiidi", $id_cliente, $usuario_id, $id_caixa, $total, $empresa_id);
     if (!$stmt_venda->execute()) {
         throw new Exception("Erro ao registrar a venda.");
     }
     $venda_id = $mysql->insert_id;
 
-    $stmt_item = $mysql->prepare("INSERT INTO venda_itens (id_venda, id_produto, quantidade, preco_unitario, valor_total_item)
-                          VALUES (?, ?, ?, ?, ?)");
-    $stmt_baixa = $mysql->prepare("UPDATE estoque SET quantidade = quantidade - ? WHERE id = ? AND quantidade >= ?");
+    $stmt_item = $mysql->prepare("INSERT INTO venda_itens (id_venda, id_produto, quantidade, preco_unitario, valor_total_item, empresa_id)
+                          VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt_baixa = $mysql->prepare("UPDATE estoque SET quantidade = quantidade - ? WHERE id = ? AND quantidade >= ? AND empresa_id = ?");
 
     foreach ($itens_calculados as $item) {
-        $stmt_item->bind_param("iiidd", $venda_id, $item['id'], $item['qtd'], $item['preco'], $item['total']);
+        $stmt_item->bind_param("iiiddi", $venda_id, $item['id'], $item['qtd'], $item['preco'], $item['total'], $empresa_id);
         if (!$stmt_item->execute()) {
             throw new Exception("Erro ao registrar item da venda.");
         }
-        $stmt_baixa->bind_param("iii", $item['qtd'], $item['id'], $item['qtd']);
+        $stmt_baixa->bind_param("iiii", $item['qtd'], $item['id'], $item['qtd'], $empresa_id);
         if (!$stmt_baixa->execute() || $stmt_baixa->affected_rows === 0) {
             throw new Exception("Erro ao baixar estoque do produto #{$item['id']}.");
         }
     }
 
     $obs = "Venda #$venda_id (via orçamento #$id_orcamento)";
-    $stmt_caixa = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, forma_pagamento, valor, observacao)
-                                VALUES (?, 'ENTRADA', 'Venda', 'Dinheiro', ?, ?)");
-    $stmt_caixa->bind_param("ids", $id_caixa, $total, $obs);
+    $stmt_caixa = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, forma_pagamento, valor, observacao, empresa_id)
+                                VALUES (?, 'ENTRADA', 'Venda', 'Dinheiro', ?, ?, ?)");
+    $stmt_caixa->bind_param("idsi", $id_caixa, $total, $obs, $empresa_id);
     if (!$stmt_caixa->execute()) {
         throw new Exception("Erro ao registrar a movimentação de caixa.");
     }
 
-    $stmt_status = $mysql->prepare("UPDATE orcamentos SET status = 'Aprovado' WHERE id = ?");
-    $stmt_status->bind_param("i", $id_orcamento);
+    $stmt_status = $mysql->prepare("UPDATE orcamentos SET status = 'Aprovado' WHERE id = ? AND empresa_id = ?");
+    $stmt_status->bind_param("ii", $id_orcamento, $empresa_id);
     $stmt_status->execute();
 
     $mysql->commit();

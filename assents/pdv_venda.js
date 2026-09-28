@@ -4,8 +4,8 @@ function buscarClientePorId(id) {
     const $select = window.jQuery ? jQuery('#id_cliente') : null;
     if (!id || !$select) return;
 
-    if (id == 1) {
-        $select.val('1').trigger('change');
+    if (String(id) === String(window.CLIENTE_AVULSO_ID)) {
+        $select.val(String(window.CLIENTE_AVULSO_ID)).trigger('change');
         return;
     }
 
@@ -151,7 +151,7 @@ function finalizarVendaPDV() {
         return;
     }
 
-    const idCliente = document.getElementById('id_cliente')?.value || '1';
+    const idCliente = document.getElementById('id_cliente')?.value || String(window.CLIENTE_AVULSO_ID);
     const formaPgto = document.getElementById('forma_pagamento')?.value || 'Dinheiro';
     const tipoVenda = document.getElementById('tipo_venda')?.value || 'Local';
     const desconto = parseFloat(document.getElementById('desconto_geral')?.value || 0) || 0;
@@ -159,7 +159,7 @@ function finalizarVendaPDV() {
 
     const divFiado = document.getElementById('div_vencimento_fiado');
     const ehFiado = divFiado && !divFiado.className.includes('hidden');
-    if (ehFiado && idCliente === '1') {
+    if (ehFiado && idCliente === String(window.CLIENTE_AVULSO_ID)) {
         Swal.fire('Atenção', 'Venda a prazo (fiado) exige um cliente cadastrado, não pode ser "Consumidor Final".', 'warning');
         return;
     }

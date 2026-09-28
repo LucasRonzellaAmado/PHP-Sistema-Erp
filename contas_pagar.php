@@ -13,6 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_lancamento'])) {
     csrf_verify_form();
 
     $id_fornecedor = !empty($_POST['id_fornecedor']) ? intval($_POST['id_fornecedor']) : null;
+    if ($id_fornecedor !== null) {
+        $chk = $mysql->prepare("SELECT id FROM fornecedores WHERE id = ? AND empresa_id = ?");
+        $chk->bind_param("ii", $id_fornecedor, $_SESSION['empresa_id']);
+        $chk->execute();
+        if (!$chk->get_result()->fetch_assoc()) $id_fornecedor = null;
+    }
     $descricao = trim($_POST['descricao'] ?? '');
     $valor = (float)str_replace(',', '.', str_replace('.', '', $_POST['valor'] ?? '0'));
     $vencimento = $_POST['vencimento'] ?? '';
@@ -20,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_lancamento'])) {
     if ($descricao === '' || $valor <= 0 || $vencimento === '') {
         $erro = 'Preencha descrição, valor e vencimento corretamente.';
     } else {
-        $stmt = $mysql->prepare("INSERT INTO contas_pagar (id_fornecedor, descricao, valor, data_vencimento, status, usuario_id) VALUES (?, ?, ?, ?, 'Pendente', ?)");
-        $stmt->bind_param("isdsi", $id_fornecedor, $descricao, $valor, $vencimento, $_SESSION['id']);
+        $stmt = $mysql->prepare("INSERT INTO contas_pagar (id_fornecedor, descricao, valor, data_vencimento, status, usuario_id, empresa_id) VALUES (?, ?, ?, ?, 'Pendente', ?, ?)");
+        $stmt->bind_param("isdsii", $id_fornecedor, $descricao, $valor, $vencimento, $_SESSION['id'], $_SESSION['empresa_id']);
         $stmt->execute();
         header("Location: contas_pagar.php?sucesso=1");
         exit;
@@ -29,13 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_lancamento'])) {
 }
 
 $filtro = $_GET['status'] ?? 'Pendente';
-$where = '';
-if ($filtro === 'Pendente') $where = "WHERE cp.status = 'Pendente'";
-elseif ($filtro === 'Pago') $where = "WHERE cp.status = 'Pago'";
-elseif ($filtro === 'Atrasado') $where = "WHERE cp.status = 'Pendente' AND cp.data_vencimento < CURDATE()";
+$eid = (int)$_SESSION['empresa_id'];
+$where = "WHERE cp.empresa_id = $eid";
+if ($filtro === 'Pendente') $where .= " AND cp.status = 'Pendente'";
+elseif ($filtro === 'Pago') $where .= " AND cp.status = 'Pago'";
+elseif ($filtro === 'Atrasado') $where .= " AND cp.status = 'Pendente' AND cp.data_vencimento < CURDATE()";
 
 $res = $mysql->query("SELECT cp.*, f.razao_social FROM contas_pagar cp
-                       LEFT JOIN fornecedores f ON cp.id_fornecedor = f.id
+                       LEFT JOIN fornecedores f ON cp.id_fornecedor = f.id AND f.empresa_id = cp.empresa_id
                        $where
                        ORDER BY cp.data_vencimento ASC");
 
@@ -43,10 +50,10 @@ $res_resumo = $mysql->query("SELECT
     SUM(CASE WHEN status = 'Pendente' THEN valor ELSE 0 END) as total_pendente,
     SUM(CASE WHEN status = 'Pendente' AND data_vencimento < CURDATE() THEN valor ELSE 0 END) as total_atrasado,
     SUM(CASE WHEN status = 'Pago' AND MONTH(data_pagamento) = MONTH(CURDATE()) AND YEAR(data_pagamento) = YEAR(CURDATE()) THEN valor ELSE 0 END) as total_pago_mes
-    FROM contas_pagar");
+    FROM contas_pagar WHERE empresa_id = $eid");
 $resumo = $res_resumo->fetch_assoc();
 
-$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 'Ativo' ORDER BY razao_social ASC");
+$res_fornecedores = $mysql->query("SELECT id, razao_social FROM fornecedores WHERE status = 'Ativo' AND empresa_id = $eid ORDER BY razao_social ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

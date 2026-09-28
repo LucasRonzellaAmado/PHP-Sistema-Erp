@@ -14,15 +14,15 @@ $stmt_orc = $mysql->prepare("SELECT o.*, c.nome as cliente_nome, c.telefone, c.e
     FROM orcamentos o
     LEFT JOIN clientes c ON o.id_cliente = c.id
     LEFT JOIN usuarios u ON o.usuario_id = u.id
-    WHERE o.id = ?");
-$stmt_orc->bind_param("i", $id);
+    WHERE o.id = ? AND o.empresa_id = ?");
+$stmt_orc->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_orc->execute();
 $orc = $stmt_orc->get_result()->fetch_assoc();
 
 if (!$orc) exit("Orçamento não encontrado");
 
-$stmt_itens = $mysql->prepare("SELECT oi.*, e.nome FROM orcamento_itens oi LEFT JOIN estoque e ON oi.id_produto = e.id WHERE oi.id_orcamento = ?");
-$stmt_itens->bind_param("i", $id);
+$stmt_itens = $mysql->prepare("SELECT oi.*, e.nome FROM orcamento_itens oi LEFT JOIN estoque e ON oi.id_produto = e.id WHERE oi.id_orcamento = ? AND oi.empresa_id = ?");
+$stmt_itens->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_itens->execute();
 $itens = $stmt_itens->get_result();
 ?>

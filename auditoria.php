@@ -13,9 +13,9 @@ $pagina = max(1, intval($_GET['pagina'] ?? 1));
 $por_pagina = 50;
 $offset = ($pagina - 1) * $por_pagina;
 
-$where = [];
-$params = [];
-$types = '';
+$where = ['empresa_id = ?'];
+$params = [$_SESSION['empresa_id']];
+$types = 'i';
 
 if ($acao_filtro !== '') {
     $where[] = "acao = ?";
@@ -45,8 +45,8 @@ $stmt->bind_param($types . 'ii', ...$params_com_paginacao);
 $stmt->execute();
 $res = $stmt->get_result();
 
-$res_acoes = $mysql->query("SELECT DISTINCT acao FROM log_auditoria ORDER BY acao ASC");
-$res_usuarios = $mysql->query("SELECT id, nome FROM usuarios ORDER BY nome ASC");
+$res_acoes = $mysql->query("SELECT DISTINCT acao FROM log_auditoria WHERE empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY acao ASC");
+$res_usuarios = $mysql->query("SELECT id, nome FROM usuarios WHERE empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY nome ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
