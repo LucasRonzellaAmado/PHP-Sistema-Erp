@@ -2,15 +2,23 @@
 require_once '../include/auth.php';
 require_once '../include/conexao.php';
 
-$id = intval($_GET['id']);
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
+    exit("<p>Sem permissão para esta ação.</p>");
+}
 
-$stmt_orc = $mysql->prepare("SELECT o.*, c.nome as cliente_nome, c.telefone, c.email FROM orcamentos o LEFT JOIN clientes c ON o.id_cliente = c.id WHERE o.id = ?");
-$stmt_orc->bind_param("i", $id);
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+$stmt_orc = $mysql->prepare("SELECT o.*, c.nome as cliente_nome, c.telefone, c.email FROM orcamentos o LEFT JOIN clientes c ON o.id_cliente = c.id WHERE o.id = ? AND o.empresa_id = ?");
+$stmt_orc->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_orc->execute();
 $orc = $stmt_orc->get_result()->fetch_assoc();
 
-$stmt_itens = $mysql->prepare("SELECT oi.*, e.nome FROM orcamento_itens oi JOIN estoque e ON oi.id_produto = e.id WHERE oi.id_orcamento = ?");
-$stmt_itens->bind_param("i", $id);
+if (!$orc) {
+    exit("<p>Orçamento não encontrado.</p>");
+}
+
+$stmt_itens = $mysql->prepare("SELECT oi.*, e.nome FROM orcamento_itens oi JOIN estoque e ON oi.id_produto = e.id WHERE oi.id_orcamento = ? AND oi.empresa_id = ?");
+$stmt_itens->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_itens->execute();
 $itens = $stmt_itens->get_result();
 
@@ -24,7 +32,7 @@ echo "<h3>Detalhes do Orçamento #" . str_pad($id, 5, '0', STR_PAD_LEFT) . "</h3
     </div>
     <div class="col" style="flex: 1;">
         <label style="font-weight: bold; display: block; color: #64748b;">Situação</label>
-        <p>Status: <strong><?= htmlspecialchars($orc['status']) ?></strong><br>Validade: <?= date('d/m/Y', strtotime($orc['validade'])) ?></p>
+        <p>Status: <strong><?= htmlspecialchars($orc['status'] ?? '') ?></strong><br>Validade: <?= $orc['validade'] ? date('d/m/Y', strtotime($orc['validade'])) : '---' ?></p>
     </div>
 </div>
 

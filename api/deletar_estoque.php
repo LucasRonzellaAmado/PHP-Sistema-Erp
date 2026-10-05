@@ -13,8 +13,8 @@ $csrf_ok = isset($_GET['csrf']) && !empty($_SESSION['csrf_token']) && hash_equal
 if ($id > 0 && $csrf_ok) {
     // Desativa em vez de apagar: um DELETE definitivo quebraria o histórico de vendas
     // e orçamentos que já referenciam este produto (venda_itens.id_produto, orcamento_itens.id_produto).
-    $stmt = $mysql->prepare("UPDATE estoque SET status = 'INATIVO' WHERE id = ?");
-    $stmt->bind_param("i", $id);
+    $stmt = $mysql->prepare("UPDATE estoque SET status = 'INATIVO' WHERE id = ? AND empresa_id = ?");
+    $stmt->bind_param("ii", $id, $_SESSION['empresa_id']);
     $stmt->execute();
 }
 

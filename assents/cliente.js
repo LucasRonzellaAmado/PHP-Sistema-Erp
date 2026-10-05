@@ -34,7 +34,7 @@ inputSearch.addEventListener('input', function() {
 
 function carregarHistorico(idCliente) {
     const corpo = document.getElementById('corpo_historico');
-    corpo.innerHTML = "<tr><td colspan='7' style='text-align:center;'>🔄 Carregando dados...</td></tr>";
+    corpo.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Carregando dados...</td></tr>";
 
     fetch(`api/get_saldo_devedor.php?id_cliente=${idCliente}`)
         .then(r => r.json())
@@ -93,11 +93,11 @@ function carregarHistorico(idCliente) {
                 const tdAcoes = document.createElement('td');
                 const btnVer = document.createElement('button');
                 btnVer.className = 'btn-action btn-view';
-                btnVer.textContent = '👁️';
+                btnVer.innerHTML = '<i class="bi bi-eye"></i>';
                 btnVer.onclick = () => verDetalhes(v.id, v.nome_produto, qtd, valorUnitario, v.data_venda);
                 const btnImprimir = document.createElement('button');
                 btnImprimir.className = 'btn-action btn-print';
-                btnImprimir.textContent = '🖨️';
+                btnImprimir.innerHTML = '<i class="bi bi-printer"></i>';
                 btnImprimir.onclick = () => imprimirVenda(v.id);
                 tdAcoes.appendChild(btnVer);
                 tdAcoes.appendChild(btnImprimir);
@@ -106,7 +106,7 @@ function carregarHistorico(idCliente) {
                 corpo.appendChild(tr);
             });
         }).catch(() => {
-            corpo.innerHTML = "<tr><td colspan='7' class='txt-red'>❌ Erro de conexão.</td></tr>";
+            corpo.innerHTML = "<tr><td colspan='7' class='txt-red'>Erro de conexão.</td></tr>";
         });
 }
 
@@ -178,7 +178,7 @@ function buscaCEP(cep) {
 
 function confirmarCadastro(id, nome) {
     Swal.fire({
-        title: '✅ Cliente Cadastrado!',
+        title: 'Cliente Cadastrado!',
         html: `<div class="swal-custom-box"><b>ID:</b> #${id}<br><b>Nome:</b> ${nome}</div>`,
         icon: 'success', confirmButtonColor: '#2563eb'
     }).then(() => { window.location='cliente.php'; });

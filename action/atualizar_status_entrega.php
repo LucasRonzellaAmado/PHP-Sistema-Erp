@@ -31,13 +31,13 @@ if (!$novo_status) {
 try {
     $mysql->begin_transaction();
 
-    $stmt_v = $mysql->prepare("UPDATE vendas SET status_entrega = ? WHERE id = ?");
-    $stmt_v->bind_param("si", $novo_status, $id_venda);
+    $stmt_v = $mysql->prepare("UPDATE vendas SET status_entrega = ? WHERE id = ? AND empresa_id = ?");
+    $stmt_v->bind_param("sii", $novo_status, $id_venda, $_SESSION['empresa_id']);
     $stmt_v->execute();
 
     if ($entregador) {
-        $stmt_e = $mysql->prepare("UPDATE venda_entregas SET entregador = ? WHERE id_venda = ?");
-        $stmt_e->bind_param("si", $entregador, $id_venda);
+        $stmt_e = $mysql->prepare("UPDATE venda_entregas SET entregador = ? WHERE id_venda = ? AND empresa_id = ?");
+        $stmt_e->bind_param("sii", $entregador, $id_venda, $_SESSION['empresa_id']);
         $stmt_e->execute();
     }
 

@@ -13,9 +13,9 @@ $status_filtro = $_GET['status'] ?? '';
 $data_inicio = $_GET['inicio'] ?? '';
 $data_fim = $_GET['fim'] ?? '';
 
-$condicoes = [];
-$params = [];
-$types = "";
+$condicoes = ["o.empresa_id = ?"];
+$params = [$_SESSION['empresa_id']];
+$types = "i";
 if ($status_filtro !== '') { $condicoes[] = "o.status = ?"; $params[] = $status_filtro; $types .= "s"; }
 if ($data_inicio !== '')   { $condicoes[] = "o.data_emissao >= ?"; $params[] = $data_inicio; $types .= "s"; }
 if ($data_fim !== '')      { $condicoes[] = "o.data_emissao <= ?"; $params[] = $data_fim; $types .= "s"; }
@@ -25,7 +25,7 @@ $where = count($condicoes) > 0 ? "WHERE " . implode(" AND ", $condicoes) : "";
 $sql = "SELECT o.*, u.nome as nome_vendedor, c.nome as nome_cliente
         FROM orcamentos o
         LEFT JOIN usuarios u ON o.usuario_id = u.id
-        LEFT JOIN clientes c ON o.id_cliente = c.id
+        LEFT JOIN clientes c ON o.id_cliente = c.id AND c.empresa_id = o.empresa_id
         $where
         ORDER BY o.id DESC";
 
@@ -53,7 +53,7 @@ $res = $stmt->get_result();
     <div class="conteudo">
         <div class="header-historico">
             <div>
-                <h2>📋 Histórico de Orçamentos</h2>
+                <h2><i class="bi bi-clipboard-data"></i> Histórico de Orçamentos</h2>
                 <p>Gerencie suas propostas comerciais e conversões.</p>
             </div>
             <a href="orcamento.php" class="btn-primary-custom">+ NOVO ORÇAMENTO</a>
@@ -98,30 +98,30 @@ $res = $stmt->get_result();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while($o = $res->fetch_assoc()): 
+                    <?php while($o = $res->fetch_assoc()):
                         $hoje = new DateTime();
-                        $validade = new DateTime($o['validade']);
+                        $validade = new DateTime($o['validade'] ?? 'now');
                         $expirado = ($hoje > $validade && $o['status'] == 'Pendente');
-                        
-                        $status_label = $o['status'];
-                        $class = "status-" . strtolower($o['status']);
+
+                        $status_label = $o['status'] ?? '';
+                        $class = "status-" . strtolower($o['status'] ?? '');
                         if ($expirado) { $class = "status-expirado"; $status_label = "Expirado"; }
                     ?>
                     <tr>
                         <td><strong>#<?= str_pad($o['id'], 5, '0', STR_PAD_LEFT) ?></strong></td>
-                        <td><?= date('d/m/Y', strtotime($o['data_emissao'])) ?></td>
+                        <td><?= $o['data_emissao'] ? date('d/m/Y', strtotime($o['data_emissao'])) : '---' ?></td>
                         <td><?= htmlspecialchars($o['nome_cliente'] ?? 'Consumidor Avulso') ?></td>
                         <td><?= htmlspecialchars($o['nome_vendedor'] ?? 'Sistema') ?></td>
-                        <td><strong>R$ <?= number_format($o['valor_total'], 2, ',', '.') ?></strong></td>
+                        <td><strong>R$ <?= number_format($o['valor_total'] ?? 0, 2, ',', '.') ?></strong></td>
                         <td>
                             <span class="badge-status <?= $class ?>">
                                 <?= strtoupper($status_label) ?>
                             </span>
                         </td>
                         <td class="actions-cell">
-                            <button class="btn-view" data-id="<?= $o['id'] ?>">🔍 Detalhes</button>
+                            <button class="btn-view" data-id="<?= $o['id'] ?>"><i class="bi bi-eye"></i> Detalhes</button>
                             <?php if($o['status'] == 'Pendente' && !$expirado): ?>
-                                <a href="aprovar_orcamento.php?id=<?= (int)$o['id'] ?>&csrf=<?= urlencode(csrf_token()) ?>" class="btn-approve" title="Aprovar">✅</a>
+                                <a href="aprovar_orcamento.php?id=<?= (int)$o['id'] ?>&csrf=<?= urlencode(csrf_token()) ?>" class="btn-approve" title="Aprovar"><i class="bi bi-check-lg"></i></a>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -138,7 +138,7 @@ $res = $stmt->get_result();
             <p style="text-align:center;">Carregando detalhes...</p>
         </div>
         <div class="modal-footer">
-            <button class="btn-print" id="btn-imprimir-js">🖨️ Imprimir</button>
+            <button class="btn-print" id="btn-imprimir-js"><i class="bi bi-printer"></i> Imprimir</button>
             <button class="btn-close-modal" id="btn-fechar-js">FECHAR</button>
         </div>
     </div>

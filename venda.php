@@ -37,12 +37,7 @@ if (!in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
     exit;
 }
 
-$res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC");
-$sql_produtos = "SELECT id, nome,
-    CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda,
-    quantidade FROM estoque WHERE status = 'ATIVO' ORDER BY nome ASC";
-$res_produtos = $mysql->query($sql_produtos);
-$res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pagamento WHERE status = 1 ORDER BY id ASC");
+$res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pagamento WHERE status = 1 AND empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY id ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -92,7 +87,7 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
     <div class="conteudo-pdv">
         <header class="pdv-header">
             <div>
-                <h2>🛒 Frente de Caixa (PDV)</h2>
+                <h2><i class="bi bi-cart3"></i> Frente de Caixa (PDV)</h2>
                 <p>Realize vendas rápidas e emita comprovantes.</p>
             </div>
             <div class="operador-badge">
@@ -107,34 +102,18 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
                     <label class="label-tiny">1. IDENTIFICAR CLIENTE</label>
                     <div class="cliente-input-group">
                         <input type="number" id="busca_id_cliente" placeholder="ID" oninput="buscarClientePorId(this.value)">
-                        <select id="id_cliente">
-                            <option value="1">Consumidor Final</option>
-                            <?php while($c = $res_clientes->fetch_assoc()): ?>
-                                <option value="<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['nome']) ?></option>
-                            <?php endwhile; ?>
+                        <select id="id_cliente" style="width: 100%">
+                            <option value="<?= (int)$_SESSION['cliente_avulso_id'] ?>">Consumidor Final</option>
                         </select>
                     </div>
                 </section>
 
                 <section class="card-erp">
-                    <label class="label-tiny">LEITOR DE CÓDIGO DE BARRAS</label>
+                    <label class="label-tiny">2. ADICIONAR ITENS (BUSQUE POR ID, NOME OU CÓDIGO DE BARRAS)</label>
                     <div class="produto-input-group">
-                        <input type="text" id="input_codigo_barras" placeholder="Aponte o leitor aqui e escaneie..." style="width: 100%" autocomplete="off">
-                    </div>
-
-                    <label class="label-tiny">2. ADICIONAR ITENS (BUSQUE POR ID OU NOME)</label>
-                    <div class="produto-input-group">
+                        <input type="text" id="input_codigo_barras" placeholder="Cód. barras" autocomplete="off">
                         <select id="select_produto" style="width: 100%">
                             <option value="">Pesquisar código ou nome...</option>
-                            <?php 
-                            mysqli_data_seek($res_produtos, 0); 
-                            while($p = $res_produtos->fetch_assoc()): ?>
-                                <option value="<?= (int)$p['id'] ?>"
-                                        data-nome="<?= htmlspecialchars($p['nome']) ?>"
-                                        data-preco="<?= (float)$p['preco_venda'] ?>">
-                                    <?= (int)$p['id'] ?> - <?= htmlspecialchars($p['nome']) ?> (R$ <?= number_format($p['preco_venda'], 2, ',', '.') ?>)
-                                </option>
-                            <?php endwhile; ?>
                         </select>
                         <input type="number" id="qtd_item" value="1" min="1" style="width: 80px;">
                         <button class="btn-add-pdv" onclick="adicionarItemPDV()">ADICIONAR</button>
@@ -173,8 +152,8 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
 
                     <label class="label-tiny">TIPO DE PEDIDO</label>
                     <select id="tipo_venda" onchange="toggleEntregaInterface()" class="form-control mb-2">
-                        <option value="Local">🛒 Balcão / Retirada</option>
-                        <option value="Entrega">🛵 Entrega</option>
+                        <option value="Local">Balcão / Retirada</option>
+                        <option value="Entrega">Entrega</option>
                     </select>
 
                     <div id="area_entrega" class="entrega-container">
@@ -221,20 +200,53 @@ $res_formas_pagamento = $mysql->query("SELECT nome, permite_prazo FROM formas_pa
                         <span class="label-fiscal">Gerar Nota Fiscal?</span>
                     </div>
 
-                    <button class="btn-finalize" onclick="finalizarVendaPDV()">🚀 FINALIZAR VENDA</button>
+                    <button class="btn-finalize" onclick="finalizarVendaPDV()"><i class="bi bi-check2-circle"></i> FINALIZAR VENDA</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script>window.CLIENTE_AVULSO_ID = <?= json_encode((string)(int)$_SESSION['cliente_avulso_id']) ?>;</script>
 <script src="assents/pdv_venda.js"></script>
 <script>
 $(document).ready(function() {
     const $prodSelect = $('#select_produto').select2({
         placeholder: "Busque por ID ou Nome...",
         allowClear: true,
-        width: 'resolve'
+        width: 'resolve',
+        minimumInputLength: 1,
+        ajax: {
+            url: 'api/buscar_produtos.php',
+            dataType: 'json',
+            delay: 250,
+            data: params => ({ q: params.term }),
+            processResults: data => ({ results: data.results })
+        },
+        language: {
+            inputTooShort: () => 'Digite ao menos 1 caractere...',
+            searching: () => 'Buscando...',
+            noResults: () => 'Nenhum produto encontrado'
+        }
+    });
+
+    $('#id_cliente').select2({
+        placeholder: "Buscar cliente pelo nome...",
+        allowClear: false,
+        width: 'resolve',
+        minimumInputLength: 1,
+        ajax: {
+            url: 'api/buscar_clientes.php',
+            dataType: 'json',
+            delay: 250,
+            data: params => ({ q: params.term }),
+            processResults: data => ({ results: data.results })
+        },
+        language: {
+            inputTooShort: () => 'Digite ao menos 1 caractere...',
+            searching: () => 'Buscando...',
+            noResults: () => 'Nenhum cliente encontrado'
+        }
     });
 
     $prodSelect.on('select2:open', function() {

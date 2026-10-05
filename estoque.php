@@ -11,11 +11,14 @@ if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'est
     exit;
 }
 
-$busca = isset($_GET['busca']) ? $mysql->real_escape_string($_GET['busca']) : '';
-$where = !empty($busca) ? "WHERE nome LIKE '%$busca%' OR codigo_produto LIKE '%$busca%' OR codigo_barras LIKE '%$busca%'" : "";
+$busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
+$like = '%' . $busca . '%';
 
-$sql = "SELECT id, nome, codigo_produto, quantidade, qtd_minima, preco_venda, categoria, status FROM estoque $where ORDER BY nome ASC";
-$res = $mysql->query($sql);
+$stmt_lista = $mysql->prepare("SELECT id, nome, codigo_produto, quantidade, qtd_minima, preco_venda, categoria, status FROM estoque
+    WHERE empresa_id = ? AND (? = '' OR nome LIKE ? OR codigo_produto LIKE ? OR codigo_barras LIKE ?) ORDER BY nome ASC");
+$stmt_lista->bind_param("issss", $_SESSION['empresa_id'], $busca, $like, $like, $like);
+$stmt_lista->execute();
+$res = $stmt_lista->get_result();
 
 $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : "";
 ?>
@@ -35,7 +38,7 @@ $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : ""
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>📦 Controle de Estoque</h1>
+                <h1><i class="bi bi-box-seam"></i> Controle de Estoque</h1>
                 <p>Gerencie seus produtos e níveis de inventário</p>
             </div>
             <div class="actions-group">
@@ -53,7 +56,7 @@ $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : ""
             <div class="filter-bar">
                 <form method="GET" action="estoque.php" class="search-form">
                     <input type="text" name="busca" placeholder="Buscar por nome, SKU ou código de barras..." value="<?= htmlspecialchars($busca ?? '') ?>">
-                    <button type="submit">🔍 Filtrar</button>
+                    <button type="submit"><i class="bi bi-search"></i> Filtrar</button>
                 </form>
             </div>
 
@@ -79,19 +82,19 @@ $sucesso = isset($_GET['sucesso_edit']) ? "Produto atualizado com sucesso!" : ""
                                 $status_class = $produto_ativo ? 'status-active' : 'status-inactive';
                             ?>
                                 <tr>
-                                    <td class="txt-bold">#<?= htmlspecialchars($row['codigo_produto']) ?></td>
+                                    <td class="txt-bold">#<?= htmlspecialchars($row['codigo_produto'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['nome'] ?? '') ?></td>
                                     <td><span class="badge-categoria"><?= htmlspecialchars($row['categoria'] ?? 'Sem Categoria') ?></span></td>
                                     <td class="<?= $critico ? 'txt-danger txt-bold' : '' ?>">
                                         <?= number_format($row['quantidade'] ?? 0, 2, ',', '.') ?>
-                                        <?= $critico ? ' ⚠️' : '' ?>
+                                        <?= $critico ? ' <i class="bi bi-exclamation-triangle"></i>' : '' ?>
                                     </td>
                                     <td><?= number_format($row['qtd_minima'] ?? 0, 2, ',', '.') ?></td>
                                     <td class="txt-primary txt-bold">R$ <?= number_format($row['preco_venda'] ?? 0, 2, ',', '.') ?></td>
                                     <td><span class="status-dot <?= $status_class ?>"><?= $produto_ativo ? 'ATIVO' : 'INATIVO' ?></span></td>
                                     <td class="actions-cell">
-                                        <a href="editar_estoque.php?id=<?= (int)$row['id'] ?>" class="btn-edit" title="Editar">✏️</a>
-                                        <button onclick="confirmarExclusao(<?= (int)$row['id'] ?>)" class="btn-delete" title="Desativar">🗑️</button>
+                                        <a href="editar_estoque.php?id=<?= (int)$row['id'] ?>" class="btn-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+                                        <button onclick="confirmarExclusao(<?= (int)$row['id'] ?>)" class="btn-delete" title="Desativar"><i class="bi bi-trash"></i></button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>

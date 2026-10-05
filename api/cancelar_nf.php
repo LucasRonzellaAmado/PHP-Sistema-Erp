@@ -19,8 +19,8 @@ if ($id <= 0) {
     exit;
 }
 
-$stmt = $mysql->prepare("UPDATE notas_fiscais SET status = 'Cancelada' WHERE id = ? AND status != 'Cancelada'");
-$stmt->bind_param("i", $id);
+$stmt = $mysql->prepare("UPDATE notas_fiscais SET status = 'Cancelada' WHERE id = ? AND status != 'Cancelada' AND empresa_id = ?");
+$stmt->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt->execute();
 
 if ($stmt->affected_rows === 0) {

@@ -20,6 +20,15 @@ if (!$dados || empty($dados['itens'])) {
 
 $usuario_id = $_SESSION['id'];
 $id_cliente = !empty($dados['id_cliente']) ? intval($dados['id_cliente']) : null;
+if ($id_cliente !== null) {
+    $chk = $mysql->prepare("SELECT id FROM clientes WHERE id = ? AND empresa_id = ?");
+    $chk->bind_param("ii", $id_cliente, $_SESSION['empresa_id']);
+    $chk->execute();
+    if (!$chk->get_result()->fetch_assoc()) {
+        echo json_encode(['success' => false, 'message' => 'Cliente inválido.']);
+        exit;
+    }
+}
 $validade = $dados['validade'] ?? date('Y-m-d', strtotime('+7 days'));
 $condicoes = $dados['condicoes'] ?? '';
 $observacoes = $dados['observacoes'] ?? '';
@@ -40,8 +49,8 @@ try {
         }
 
         $stmt_p = $mysql->prepare("SELECT CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco
-                                    FROM estoque WHERE id = ? AND status = 'ATIVO'");
-        $stmt_p->bind_param("i", $id_p);
+                                    FROM estoque WHERE id = ? AND status = 'ATIVO' AND empresa_id = ?");
+        $stmt_p->bind_param("ii", $id_p, $_SESSION['empresa_id']);
         $stmt_p->execute();
         $produto = $stmt_p->get_result()->fetch_assoc();
 
@@ -59,9 +68,9 @@ try {
     $desconto_percent = isset($dados['desconto']) ? max(0, min(100, floatval($dados['desconto']))) : 0;
     $total_final = $total_bruto - ($total_bruto * ($desconto_percent / 100));
 
-    $stmt_orc = $mysql->prepare("INSERT INTO orcamentos (id_cliente, usuario_id, status, validade, valor_total, condicoes_comerciais, observacoes, data_emissao)
-                                  VALUES (?, ?, 'Pendente', ?, ?, ?, ?, NOW())");
-    $stmt_orc->bind_param("iisdss", $id_cliente, $usuario_id, $validade, $total_final, $condicoes, $observacoes);
+    $stmt_orc = $mysql->prepare("INSERT INTO orcamentos (id_cliente, usuario_id, status, validade, valor_total, condicoes_comerciais, observacoes, data_emissao, empresa_id)
+                                  VALUES (?, ?, 'Pendente', ?, ?, ?, ?, NOW(), ?)");
+    $stmt_orc->bind_param("iisdssi", $id_cliente, $usuario_id, $validade, $total_final, $condicoes, $observacoes, $_SESSION['empresa_id']);
 
     if (!$stmt_orc->execute()) {
         throw new Exception("Erro ao registrar orçamento.");
@@ -69,11 +78,11 @@ try {
 
     $id_orcamento = $mysql->insert_id;
 
-    $stmt_item = $mysql->prepare("INSERT INTO orcamento_itens (id_orcamento, id_produto, quantidade, preco_unitario, valor_total_item)
-                                   VALUES (?, ?, ?, ?, ?)");
+    $stmt_item = $mysql->prepare("INSERT INTO orcamento_itens (id_orcamento, id_produto, quantidade, preco_unitario, valor_total_item, empresa_id)
+                                   VALUES (?, ?, ?, ?, ?, ?)");
 
     foreach ($itens_calculados as $item) {
-        $stmt_item->bind_param("iiidd", $id_orcamento, $item['id'], $item['qtd'], $item['preco'], $item['subtotal']);
+        $stmt_item->bind_param("iiiddi", $id_orcamento, $item['id'], $item['qtd'], $item['preco'], $item['subtotal'], $_SESSION['empresa_id']);
         if (!$stmt_item->execute()) {
             throw new Exception("Erro ao registrar item do orçamento.");
         }

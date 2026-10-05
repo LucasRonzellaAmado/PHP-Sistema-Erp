@@ -12,8 +12,8 @@ $csrf_ok = isset($_GET['csrf']) && !empty($_SESSION['csrf_token']) && hash_equal
 $sucesso = false;
 
 if ($id > 0 && $csrf_ok) {
-    $stmt = $mysql->prepare("UPDATE orcamentos SET status = 'Aprovado', data_aprovacao = NOW() WHERE id = ? AND status = 'Pendente'");
-    $stmt->bind_param("i", $id);
+    $stmt = $mysql->prepare("UPDATE orcamentos SET status = 'Aprovado', data_aprovacao = NOW() WHERE id = ? AND status = 'Pendente' AND empresa_id = ?");
+    $stmt->bind_param("ii", $id, $_SESSION['empresa_id']);
     $stmt->execute();
     $sucesso = $stmt->affected_rows > 0;
     if ($sucesso) {

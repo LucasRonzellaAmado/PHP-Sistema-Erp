@@ -13,19 +13,19 @@ $inicio_periodo = "$data_inicio 00:00:00";
 $fim_periodo = "$data_fim 23:59:59";
 
 $sql = "SELECT v.*, u.nome as nome_vendedor,
-        (SELECT COUNT(*) FROM venda_itens vi WHERE vi.id_venda = v.id) as total_itens
+        (SELECT COUNT(*) FROM venda_itens vi WHERE vi.id_venda = v.id AND vi.empresa_id = v.empresa_id) as total_itens
         FROM vendas v
         LEFT JOIN usuarios u ON v.usuario_id = u.id
-        WHERE v.data_venda BETWEEN ? AND ?
+        WHERE v.data_venda BETWEEN ? AND ? AND v.empresa_id = ?
         ORDER BY v.id DESC";
 $stmt = $mysql->prepare($sql);
-$stmt->bind_param("ss", $inicio_periodo, $fim_periodo);
+$stmt->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
 $stmt->execute();
 $vendas = $stmt->get_result();
 
-$sql_soma = "SELECT SUM(valor_total) as total_periodo FROM vendas WHERE data_venda BETWEEN ? AND ?";
+$sql_soma = "SELECT SUM(valor_total) as total_periodo FROM vendas WHERE data_venda BETWEEN ? AND ? AND empresa_id = ?";
 $stmt_soma = $mysql->prepare($sql_soma);
-$stmt_soma->bind_param("ss", $inicio_periodo, $fim_periodo);
+$stmt_soma->bind_param("ssi", $inicio_periodo, $fim_periodo, $_SESSION['empresa_id']);
 $stmt_soma->execute();
 $total_faturado = $stmt_soma->get_result()->fetch_assoc()['total_periodo'] ?? 0;
 ?>
@@ -44,7 +44,7 @@ $total_faturado = $stmt_soma->get_result()->fetch_assoc()['total_periodo'] ?? 0;
         <div class="conteudo">
             <div class="header-vendas">
                 <div>
-                    <h2>📊 Histórico de Vendas</h2>
+                    <h2><i class="bi bi-bar-chart"></i> Histórico de Vendas</h2>
                     <p>Listagem de transações e faturamento do período.</p>
                 </div>
                 <div class="resumo-faturamento">
@@ -87,13 +87,13 @@ $total_faturado = $stmt_soma->get_result()->fetch_assoc()['total_periodo'] ?? 0;
                                     <strong>Venda de Produtos</strong><br>
                                     <small><?= $v['total_itens'] ?> item(ns)</small>
                                 </td>
-                                <td><?= date('d/m/Y H:i', strtotime($v['data_venda'])) ?></td>
+                                <td><?= $v['data_venda'] ? date('d/m/Y H:i', strtotime($v['data_venda'])) : '---' ?></td>
                                 <td><?= htmlspecialchars($v['nome_vendedor'] ?? 'Sistema') ?></td>
-                                <td><span class="badge"><?= htmlspecialchars($v['forma_pagamento']) ?></span></td>
+                                <td><span class="badge"><?= htmlspecialchars($v['forma_pagamento'] ?? '') ?></span></td>
                                 <td class="txt-total">R$ <?= number_format($v['valor_total'], 2, ',', '.') ?></td>
                                 <td class="actions">
-                                    <button class="btn-view" data-id="<?= $v['id'] ?>">👁️</button>
-                                    <a href="imprimir_cupom.php?id=<?= $v['id'] ?>" target="_blank" class="btn-print">🖨️</a>
+                                    <button class="btn-view" data-id="<?= $v['id'] ?>"><i class="bi bi-eye"></i></button>
+                                    <a href="imprimir_cupom.php?id=<?= $v['id'] ?>" target="_blank" class="btn-print"><i class="bi bi-printer"></i></a>
                                 </td>
                             </tr>
                             <?php endwhile; ?>

@@ -15,7 +15,7 @@ function limparValor($valor) {
     return floatval($valor);
 }
 
-$res_caixa = $mysql->query("SELECT * FROM controle_caixas WHERE id = '$caixa_id_sessao' AND status = 'Aberto' LIMIT 1");
+$res_caixa = $mysql->query("SELECT * FROM controle_caixas WHERE id = '" . (int)$caixa_id_sessao . "' AND status = 'Aberto' AND empresa_id = " . (int)$_SESSION['empresa_id'] . " LIMIT 1");
 $caixa = $res_caixa->fetch_assoc();
 
 if (!$caixa) { 
@@ -26,7 +26,7 @@ if (!$caixa) {
 $caixa_id = $caixa['id'];
 $formas_exibicao = ['Dinheiro' => 0, 'Cartão de Crédito' => 0, 'Cartão de Débito' => 0, 'PIX' => 0];
 
-$res_mov = $mysql->query("SELECT forma_pagamento, valor, tipo FROM movimentacoes_caixa WHERE caixa_id = $caixa_id");
+$res_mov = $mysql->query("SELECT forma_pagamento, valor, tipo FROM movimentacoes_caixa WHERE caixa_id = $caixa_id AND empresa_id = " . (int)$_SESSION['empresa_id']);
 $saldo_movimentacoes = 0;
 
 while ($m = $res_mov->fetch_assoc()) {
@@ -50,9 +50,9 @@ if (isset($_POST['confirmar_fechamento'])) {
     $valor_contado = limparValor($_POST['valor_total_final']);
     $data_fechamento = date('Y-m-d H:i:s');
 
-    $sql = "UPDATE controle_caixas SET valor_fechamento_esperado = ?, valor_fechamento_contado = ?, status = 'Fechado', data_fechamento = ? WHERE id = ?";
+    $sql = "UPDATE controle_caixas SET valor_fechamento_esperado = ?, valor_fechamento_contado = ?, status = 'Fechado', data_fechamento = ? WHERE id = ? AND empresa_id = ?";
     $stmt = $mysql->prepare($sql);
-    $stmt->bind_param("ddsi", $saldo_esperado, $valor_contado, $data_fechamento, $caixa_id);
+    $stmt->bind_param("ddsii", $saldo_esperado, $valor_contado, $data_fechamento, $caixa_id, $_SESSION['empresa_id']);
 
     if ($stmt->execute()) {
         $diferenca = $valor_contado - $saldo_esperado;
@@ -77,7 +77,7 @@ if (isset($_POST['confirmar_fechamento'])) {
     
     <div class="conteudo">
         <div class="header-fechamento">
-            <h2>🔒 Fechamento de Turno</h2>
+            <h2><i class="bi bi-lock"></i> Fechamento de Turno</h2>
             <p>Compare os valores do sistema com o dinheiro físico no caixa.</p>
         </div>
 
@@ -86,7 +86,7 @@ if (isset($_POST['confirmar_fechamento'])) {
             <div class="pdv-grid">
                 <div class="col-principal">
                     <div class="card-erp">
-                        <h3 class="card-title">📊 RESUMO DO SISTEMA</h3>
+                        <h3 class="card-title"><i class="bi bi-bar-chart"></i> RESUMO DO SISTEMA</h3>
                         <table class="tabela-resumo">
                             <tr>
                                 <td>Fundo de Caixa (Abertura)</td>
@@ -108,7 +108,7 @@ if (isset($_POST['confirmar_fechamento'])) {
 
                 <div class="col-lateral">
                     <div class="card-erp">
-                        <h3 class="card-title">💵 CONFERÊNCIA FÍSICA</h3>
+                        <h3 class="card-title"><i class="bi bi-cash"></i> CONFERÊNCIA FÍSICA</h3>
                         
                         <div class="input-group">
                             <label>Dinheiro em Espécie</label>

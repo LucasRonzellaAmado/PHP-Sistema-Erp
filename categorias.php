@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nova_categoria'])) {
     if ($nome === '') {
         $erro = 'Informe o nome da categoria.';
     } else {
-        $stmt = $mysql->prepare("INSERT INTO categorias (nome, status) VALUES (?, 1)");
-        $stmt->bind_param("s", $nome);
+        $stmt = $mysql->prepare("INSERT INTO categorias (nome, status, empresa_id) VALUES (?, 1, ?)");
+        $stmt->bind_param("si", $nome, $_SESSION['empresa_id']);
         if (!$stmt->execute()) {
             $erro = ($mysql->errno === 1062) ? 'Já existe uma categoria com esse nome.' : 'Erro ao salvar categoria.';
         } else {
@@ -35,15 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_id'])) {
     $status = ($_POST['status_edit'] ?? '1') === '1' ? 1 : 0;
 
     if ($nome !== '') {
-        $stmt = $mysql->prepare("UPDATE categorias SET nome = ?, status = ? WHERE id = ?");
-        $stmt->bind_param("sii", $nome, $status, $id);
+        $stmt = $mysql->prepare("UPDATE categorias SET nome = ?, status = ? WHERE id = ? AND empresa_id = ?");
+        $stmt->bind_param("siii", $nome, $status, $id, $_SESSION['empresa_id']);
         $stmt->execute();
     }
     header("Location: categorias.php?sucesso=1");
     exit;
 }
 
-$res = $mysql->query("SELECT id, nome, status FROM categorias ORDER BY nome ASC");
+$stmt_lista = $mysql->prepare("SELECT id, nome, status FROM categorias WHERE empresa_id = ? ORDER BY nome ASC");
+$stmt_lista->bind_param("i", $_SESSION['empresa_id']);
+$stmt_lista->execute();
+$res = $stmt_lista->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -61,7 +64,7 @@ $res = $mysql->query("SELECT id, nome, status FROM categorias ORDER BY nome ASC"
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>🏷️ Categorias de Produtos</h1>
+                <h1><i class="bi bi-tags"></i> Categorias de Produtos</h1>
                 <p>Cadastro mestre usado no estoque, orçamentos e vendas</p>
             </div>
         </div>
@@ -91,7 +94,7 @@ $res = $mysql->query("SELECT id, nome, status FROM categorias ORDER BY nome ASC"
                                 <td><?= htmlspecialchars($row['nome']) ?></td>
                                 <td><span class="status-dot <?= $row['status'] ? 'status-active' : 'status-inactive' ?>"><?= $row['status'] ? 'ATIVO' : 'INATIVO' ?></span></td>
                                 <td class="actions-cell">
-                                    <button class="btn-edit" title="Editar" onclick='abrirEdicao(<?= json_encode(["id"=>$row["id"],"nome"=>$row["nome"],"status"=>$row["status"]]) ?>)'>✏️</button>
+                                    <button class="btn-edit" title="Editar" onclick='abrirEdicao(<?= json_encode(["id"=>$row["id"],"nome"=>$row["nome"],"status"=>$row["status"]]) ?>)'><i class="bi bi-pencil"></i></button>
                                 </td>
                             </tr>
                             <?php endwhile; ?>

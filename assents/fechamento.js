@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (Math.abs(dif) < 0.01) {
             status.className = 'status-batido';
-            status.innerHTML = '✅ CAIXA CONFERIDO E BATIDO';
+            status.innerHTML = '<i class="bi bi-check-circle"></i> CAIXA CONFERIDO E BATIDO';
         } else {
             status.className = dif > 0 ? 'status-sobra' : 'status-falta';
-            status.innerHTML = (dif > 0 ? '⚠️ SOBRA: ' : '❌ FALTA: ') + 'R$ ' + Math.abs(dif).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            status.innerHTML = (dif > 0 ? '<i class="bi bi-exclamation-triangle"></i> SOBRA: ' : '<i class="bi bi-x-circle"></i> FALTA: ') + 'R$ ' + Math.abs(dif).toLocaleString('pt-BR', {minimumFractionDigits: 2});
         }
     }
 

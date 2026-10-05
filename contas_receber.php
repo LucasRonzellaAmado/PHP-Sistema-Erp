@@ -13,6 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_lancamento'])) {
     csrf_verify_form();
 
     $id_cliente = !empty($_POST['id_cliente']) ? intval($_POST['id_cliente']) : null;
+    if ($id_cliente !== null) {
+        $chk = $mysql->prepare("SELECT id FROM clientes WHERE id = ? AND empresa_id = ?");
+        $chk->bind_param("ii", $id_cliente, $_SESSION['empresa_id']);
+        $chk->execute();
+        if (!$chk->get_result()->fetch_assoc()) $id_cliente = null;
+    }
     $descricao = trim($_POST['descricao'] ?? '');
     $valor = (float)str_replace(',', '.', str_replace('.', '', $_POST['valor'] ?? '0'));
     $vencimento = $_POST['vencimento'] ?? '';
@@ -20,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_lancamento'])) {
     if ($descricao === '' || $valor <= 0 || $vencimento === '') {
         $erro = 'Preencha descrição, valor e vencimento corretamente.';
     } else {
-        $stmt = $mysql->prepare("INSERT INTO contas_receber (id_cliente, descricao, valor, data_vencimento, status, usuario_id) VALUES (?, ?, ?, ?, 'Pendente', ?)");
-        $stmt->bind_param("isdsi", $id_cliente, $descricao, $valor, $vencimento, $_SESSION['id']);
+        $stmt = $mysql->prepare("INSERT INTO contas_receber (id_cliente, descricao, valor, data_vencimento, status, usuario_id, empresa_id) VALUES (?, ?, ?, ?, 'Pendente', ?, ?)");
+        $stmt->bind_param("isdsii", $id_cliente, $descricao, $valor, $vencimento, $_SESSION['id'], $_SESSION['empresa_id']);
         $stmt->execute();
         header("Location: contas_receber.php?sucesso=1");
         exit;
@@ -29,13 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_lancamento'])) {
 }
 
 $filtro = $_GET['status'] ?? 'Pendente';
-$where = '';
-if ($filtro === 'Pendente') $where = "WHERE cr.status = 'Pendente'";
-elseif ($filtro === 'Recebido') $where = "WHERE cr.status = 'Recebido'";
-elseif ($filtro === 'Atrasado') $where = "WHERE cr.status = 'Pendente' AND cr.data_vencimento < CURDATE()";
+$eid = (int)$_SESSION['empresa_id'];
+$where = "WHERE cr.empresa_id = $eid";
+if ($filtro === 'Pendente') $where .= " AND cr.status = 'Pendente'";
+elseif ($filtro === 'Recebido') $where .= " AND cr.status = 'Recebido'";
+elseif ($filtro === 'Atrasado') $where .= " AND cr.status = 'Pendente' AND cr.data_vencimento < CURDATE()";
 
 $res = $mysql->query("SELECT cr.*, c.nome as cliente_nome FROM contas_receber cr
-                       LEFT JOIN clientes c ON cr.id_cliente = c.id
+                       LEFT JOIN clientes c ON cr.id_cliente = c.id AND c.empresa_id = cr.empresa_id
                        $where
                        ORDER BY cr.data_vencimento ASC");
 
@@ -43,10 +50,10 @@ $res_resumo = $mysql->query("SELECT
     SUM(CASE WHEN status = 'Pendente' THEN valor ELSE 0 END) as total_pendente,
     SUM(CASE WHEN status = 'Pendente' AND data_vencimento < CURDATE() THEN valor ELSE 0 END) as total_atrasado,
     SUM(CASE WHEN status = 'Recebido' AND MONTH(data_recebimento) = MONTH(CURDATE()) AND YEAR(data_recebimento) = YEAR(CURDATE()) THEN valor ELSE 0 END) as total_recebido_mes
-    FROM contas_receber");
+    FROM contas_receber WHERE empresa_id = $eid");
 $resumo = $res_resumo->fetch_assoc();
 
-$res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC");
+$res_clientes = $mysql->query("SELECT id, nome FROM clientes WHERE empresa_id = $eid ORDER BY nome ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -64,7 +71,7 @@ $res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC")
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>💵 Contas a Receber</h1>
+                <h1><i class="bi bi-arrow-down-circle"></i> Contas a Receber</h1>
                 <p>Vendas a prazo (fiado) e lançamentos manuais de clientes</p>
             </div>
         </div>
@@ -121,7 +128,7 @@ $res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC")
                             <tr>
                                 <td><?= htmlspecialchars($row['cliente_nome'] ?? '—') ?></td>
                                 <td><?= htmlspecialchars($row['descricao']) ?></td>
-                                <td class="<?= $atrasado ? 'txt-danger txt-bold' : '' ?>"><?= date('d/m/Y', strtotime($row['data_vencimento'])) ?><?= $atrasado ? ' ⚠️' : '' ?></td>
+                                <td class="<?= $atrasado ? 'txt-danger txt-bold' : '' ?>"><?= date('d/m/Y', strtotime($row['data_vencimento'])) ?><?= $atrasado ? ' <i class="bi bi-exclamation-triangle"></i>' : '' ?></td>
                                 <td class="txt-bold">R$ <?= number_format($row['valor'], 2, ',', '.') ?></td>
                                 <td><span class="status-dot <?= $row['status']==='Recebido'?'status-active':($atrasado?'status-inactive':'') ?>"><?= strtoupper($atrasado ? 'ATRASADO' : $row['status']) ?></span></td>
                                 <td class="actions-cell">

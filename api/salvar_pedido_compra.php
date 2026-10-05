@@ -36,8 +36,8 @@ $mysql->begin_transaction();
 
 try {
     // Confirma que o fornecedor existe e está ativo
-    $stmt_f = $mysql->prepare("SELECT id FROM fornecedores WHERE id = ? AND status = 'Ativo'");
-    $stmt_f->bind_param("i", $id_fornecedor);
+    $stmt_f = $mysql->prepare("SELECT id FROM fornecedores WHERE id = ? AND status = 'Ativo' AND empresa_id = ?");
+    $stmt_f->bind_param("ii", $id_fornecedor, $_SESSION['empresa_id']);
     $stmt_f->execute();
     if (!$stmt_f->get_result()->fetch_assoc()) {
         throw new Exception("Fornecedor inválido.");
@@ -54,8 +54,8 @@ try {
             throw new Exception("Item inválido no pedido.");
         }
 
-        $stmt_p = $mysql->prepare("SELECT preco_custo FROM estoque WHERE id = ? AND id_fornecedor = ? AND status = 'ATIVO'");
-        $stmt_p->bind_param("ii", $prod_id, $id_fornecedor);
+        $stmt_p = $mysql->prepare("SELECT preco_custo FROM estoque WHERE id = ? AND id_fornecedor = ? AND status = 'ATIVO' AND empresa_id = ?");
+        $stmt_p->bind_param("iii", $prod_id, $id_fornecedor, $_SESSION['empresa_id']);
         $stmt_p->execute();
         $produto = $stmt_p->get_result()->fetch_assoc();
         if (!$produto) {
@@ -69,29 +69,29 @@ try {
         $itens_calculados[] = ['id' => $prod_id, 'qtd' => $qtd, 'preco' => $preco, 'sub' => $sub];
     }
 
-    $sql = "INSERT INTO pedidos_compra (id_fornecedor, usuario_id, valor_total, status, data_pedido)
-            VALUES (?, ?, ?, 'Pendente', NOW())";
+    $sql = "INSERT INTO pedidos_compra (id_fornecedor, usuario_id, valor_total, status, data_pedido, empresa_id)
+            VALUES (?, ?, ?, 'Pendente', NOW(), ?)";
 
     $stmt = $mysql->prepare($sql);
-    $stmt->bind_param("iid", $id_fornecedor, $usuario_id, $total_pedido);
+    $stmt->bind_param("iidi", $id_fornecedor, $usuario_id, $total_pedido, $_SESSION['empresa_id']);
 
     if (!$stmt->execute()) throw new Exception("Falha ao gravar pedido.");
 
     $id_pedido = $mysql->insert_id;
 
-    $stmt_i = $mysql->prepare("INSERT INTO pedido_compra_itens (id_pedido, id_produto, quantidade, preco_custo, subtotal) VALUES (?, ?, ?, ?, ?)");
+    $stmt_i = $mysql->prepare("INSERT INTO pedido_compra_itens (id_pedido, id_produto, quantidade, preco_custo, subtotal, empresa_id) VALUES (?, ?, ?, ?, ?, ?)");
 
     foreach ($itens_calculados as $item) {
-        $stmt_i->bind_param("iiidd", $id_pedido, $item['id'], $item['qtd'], $item['preco'], $item['sub']);
+        $stmt_i->bind_param("iiiddi", $id_pedido, $item['id'], $item['qtd'], $item['preco'], $item['sub'], $_SESSION['empresa_id']);
         if (!$stmt_i->execute()) throw new Exception("Erro ao registrar item do pedido.");
     }
 
     // Gera automaticamente a conta a pagar correspondente (vencimento padrão de 30 dias)
     $descricao_cp = "Pedido de compra #$id_pedido";
     $vencimento_cp = date('Y-m-d', strtotime('+30 days'));
-    $stmt_cp = $mysql->prepare("INSERT INTO contas_pagar (id_fornecedor, id_pedido_compra, descricao, valor, data_vencimento, status, usuario_id)
-                                 VALUES (?, ?, ?, ?, ?, 'Pendente', ?)");
-    $stmt_cp->bind_param("iisdsi", $id_fornecedor, $id_pedido, $descricao_cp, $total_pedido, $vencimento_cp, $usuario_id);
+    $stmt_cp = $mysql->prepare("INSERT INTO contas_pagar (id_fornecedor, id_pedido_compra, descricao, valor, data_vencimento, status, usuario_id, empresa_id)
+                                 VALUES (?, ?, ?, ?, ?, 'Pendente', ?, ?)");
+    $stmt_cp->bind_param("iisdsii", $id_fornecedor, $id_pedido, $descricao_cp, $total_pedido, $vencimento_cp, $usuario_id, $_SESSION['empresa_id']);
     if (!$stmt_cp->execute()) throw new Exception("Erro ao gerar conta a pagar do pedido.");
 
     $mysql->commit();

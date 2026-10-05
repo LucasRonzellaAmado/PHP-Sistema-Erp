@@ -7,10 +7,11 @@ if (!in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'admin'])) {
     exit;
 }
 
-$res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC");
+$eid = (int)$_SESSION['empresa_id'];
+$res_clientes = $mysql->query("SELECT id, nome FROM clientes WHERE empresa_id = $eid ORDER BY nome ASC");
 $res_produtos = $mysql->query("SELECT id, nome,
     CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco
-    FROM estoque WHERE status = 'ATIVO' ORDER BY nome ASC");
+    FROM estoque WHERE status = 'ATIVO' AND empresa_id = $eid ORDER BY nome ASC");
 $data_validade = date('Y-m-d', strtotime('+7 days'));
 ?>
 <!DOCTYPE html>
@@ -30,7 +31,7 @@ $data_validade = date('Y-m-d', strtotime('+7 days'));
     <div class="conteudo">
         <header class="orcamento-header">
             <div>
-                <h2>📝 Gestão de Orçamentos</h2>
+                <h2><i class="bi bi-file-earmark-text"></i> Gestão de Orçamentos</h2>
                 <p>Crie propostas comerciais personalizadas.</p>
             </div>
             <div class="vendedor-info">
@@ -125,7 +126,7 @@ $data_validade = date('Y-m-d', strtotime('+7 days'));
                         <span class="valor-total" id="total_orcamento">R$ 0,00</span>
                     </div>
 
-                    <button class="btn-save" onclick="salvarOrcamento()">💾 SALVAR ORÇAMENTO</button>
+                    <button class="btn-save" onclick="salvarOrcamento()"><i class="bi bi-save"></i> SALVAR ORÇAMENTO</button>
                 </div>
             </div>
         </div>

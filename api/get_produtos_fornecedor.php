@@ -4,11 +4,16 @@ require_once '../include/conexao.php';
 
 header('Content-Type: application/json');
 
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'estoque', 'admin'])) {
+    echo json_encode([]);
+    exit;
+}
+
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($id > 0) {
-    $stmt = $mysql->prepare("SELECT id, nome, preco_custo, quantidade FROM estoque WHERE id_fornecedor = ? AND status = 'ATIVO'");
-    $stmt->bind_param("i", $id);
+    $stmt = $mysql->prepare("SELECT id, nome, preco_custo, quantidade FROM estoque WHERE id_fornecedor = ? AND status = 'ATIVO' AND empresa_id = ?");
+    $stmt->bind_param("ii", $id, $_SESSION['empresa_id']);
     $stmt->execute();
     $res = $stmt->get_result();
     

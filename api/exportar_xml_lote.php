@@ -11,7 +11,8 @@ if (!class_exists('ZipArchive')) {
     exit('A extensão PHP "zip" não está habilitada neste servidor. Peça ao administrador do servidor para ativar ext-zip.');
 }
 
-$stmt = $mysql->prepare("SELECT numero_nota, xml_path FROM notas_fiscais WHERE xml_path IS NOT NULL AND xml_path != '' AND MONTH(data_emissao) = MONTH(CURDATE()) AND YEAR(data_emissao) = YEAR(CURDATE())");
+$stmt = $mysql->prepare("SELECT numero_nota, xml_path FROM notas_fiscais WHERE xml_path IS NOT NULL AND xml_path != '' AND MONTH(data_emissao) = MONTH(CURDATE()) AND YEAR(data_emissao) = YEAR(CURDATE()) AND empresa_id = ?");
+$stmt->bind_param("i", $_SESSION['empresa_id']);
 $stmt->execute();
 $notas = $stmt->get_result();
 

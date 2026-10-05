@@ -2,29 +2,37 @@
 require_once '../include/auth.php';
 require_once '../include/conexao.php';
 
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
+    exit("<div style='padding:20px; color:red; text-align:center;'>Sem permissão para esta ação.</div>");
+}
+
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($id <= 0) {
     exit("<div style='padding:20px; color:red; text-align:center;'>ID de venda inválido.</div>");
 }
 
-$venda_query = $mysql->query("SELECT v.*, u.nome as vendedor_nome 
-                             FROM vendas v 
-                             LEFT JOIN usuarios u ON v.usuario_id = u.id 
-                             WHERE v.id = $id");
-$venda = $venda_query->fetch_assoc();
+$stmt_venda = $mysql->prepare("SELECT v.*, u.nome as vendedor_nome
+                             FROM vendas v
+                             LEFT JOIN usuarios u ON v.usuario_id = u.id
+                             WHERE v.id = ? AND v.empresa_id = ?");
+$stmt_venda->bind_param("ii", $id, $_SESSION['empresa_id']);
+$stmt_venda->execute();
+$venda = $stmt_venda->get_result()->fetch_assoc();
 
 if (!$venda) {
     exit("<div style='padding:20px; color:red; text-align:center;'>Venda não encontrada no banco de dados.</div>");
 }
 
-$sql_itens = "SELECT vi.*, e.nome as produto_nome 
-              FROM venda_itens vi 
-              LEFT JOIN estoque e ON vi.id_produto = e.id 
-              WHERE vi.id_venda = $id";
-$itens = $mysql->query($sql_itens);
+$stmt_itens = $mysql->prepare("SELECT vi.*, e.nome as produto_nome
+              FROM venda_itens vi
+              LEFT JOIN estoque e ON vi.id_produto = e.id
+              WHERE vi.id_venda = ? AND vi.empresa_id = ?");
+$stmt_itens->bind_param("ii", $id, $_SESSION['empresa_id']);
+$stmt_itens->execute();
+$itens = $stmt_itens->get_result();
 
-$data_venda = date('d/m/Y H:i', strtotime($venda['data_venda']));
+$data_venda = $venda['data_venda'] ? date('d/m/Y H:i', strtotime($venda['data_venda'])) : '---';
 $forma_pgto = $venda['forma_pagamento'] ?? 'Não informada';
 ?>
 

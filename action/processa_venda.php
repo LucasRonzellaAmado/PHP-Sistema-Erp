@@ -25,15 +25,27 @@ $mysql->begin_transaction();
 
 try {
     $usuario_id = $_SESSION['id'] ?? 0;
-    $id_caixa   = intval($_SESSION['id_caixa_atual'] ?? 1);
+    $empresa_id = (int)$_SESSION['empresa_id'];
+    $cliente_avulso = (int)$_SESSION['cliente_avulso_id'];
 
-    $id_cliente  = intval($dados['id_cliente'] ?? 1);
+    if (empty($_SESSION['caixa_aberto']) || empty($_SESSION['id_caixa_atual'])) {
+        throw new Exception("Abra o caixa antes de lançar uma venda.");
+    }
+    $id_caixa   = intval($_SESSION['id_caixa_atual']);
+
+    $id_cliente  = intval($dados['id_cliente'] ?? $cliente_avulso);
+    $stmt_dono = $mysql->prepare("SELECT id FROM clientes WHERE id = ? AND empresa_id = ?");
+    $stmt_dono->bind_param("ii", $id_cliente, $empresa_id);
+    $stmt_dono->execute();
+    if (!$stmt_dono->get_result()->fetch_assoc()) {
+        throw new Exception("Cliente inválido.");
+    }
     $tipo_venda  = in_array($dados['tipo_venda'] ?? '', $TIPOS_VENDA_VALIDOS, true) ? $dados['tipo_venda'] : 'Local';
 
     // Forma de pagamento é sempre validada contra o cadastro (nunca aceita string livre do cliente)
     $forma_input = $dados['forma_pagamento'] ?? 'Dinheiro';
-    $stmt_fp = $mysql->prepare("SELECT nome, permite_prazo FROM formas_pagamento WHERE nome = ? AND status = 1");
-    $stmt_fp->bind_param("s", $forma_input);
+    $stmt_fp = $mysql->prepare("SELECT nome, permite_prazo FROM formas_pagamento WHERE nome = ? AND status = 1 AND empresa_id = ?");
+    $stmt_fp->bind_param("si", $forma_input, $empresa_id);
     $stmt_fp->execute();
     $forma_row = $stmt_fp->get_result()->fetch_assoc();
 
@@ -55,8 +67,8 @@ try {
             throw new Exception("Item inválido no carrinho.");
         }
 
-        $stmt_p = $mysql->prepare("SELECT preco_venda, quantidade FROM estoque WHERE id = ? AND status = 'ATIVO' FOR UPDATE");
-        $stmt_p->bind_param("i", $id_p);
+        $stmt_p = $mysql->prepare("SELECT CASE WHEN preco_venda > 0 THEN preco_venda WHEN preco > 0 THEN preco ELSE 0 END as preco_venda, quantidade FROM estoque WHERE id = ? AND status = 'ATIVO' AND empresa_id = ? FOR UPDATE");
+        $stmt_p->bind_param("ii", $id_p, $empresa_id);
         $stmt_p->execute();
         $produto = $stmt_p->get_result()->fetch_assoc();
 
@@ -87,12 +99,12 @@ try {
     $total = max(0, $total + $frete - $desconto);
 
     if ($venda_a_prazo) {
-        if ($id_cliente <= 1) {
+        if ($id_cliente === $cliente_avulso) {
             throw new Exception("Venda a prazo exige um cliente cadastrado.");
         }
 
-        $stmt_cli = $mysql->prepare("SELECT nome, limite_credito, validar_limite FROM clientes WHERE id = ?");
-        $stmt_cli->bind_param("i", $id_cliente);
+        $stmt_cli = $mysql->prepare("SELECT nome, limite_credito, validar_limite FROM clientes WHERE id = ? AND empresa_id = ?");
+        $stmt_cli->bind_param("ii", $id_cliente, $empresa_id);
         $stmt_cli->execute();
         $cliente = $stmt_cli->get_result()->fetch_assoc();
 
@@ -101,8 +113,8 @@ try {
         }
 
         if ((int)$cliente['validar_limite'] === 1) {
-            $stmt_deve = $mysql->prepare("SELECT COALESCE(SUM(valor), 0) as em_aberto FROM contas_receber WHERE id_cliente = ? AND status = 'Pendente'");
-            $stmt_deve->bind_param("i", $id_cliente);
+            $stmt_deve = $mysql->prepare("SELECT COALESCE(SUM(valor), 0) as em_aberto FROM contas_receber WHERE id_cliente = ? AND status = 'Pendente' AND empresa_id = ?");
+            $stmt_deve->bind_param("ii", $id_cliente, $empresa_id);
             $stmt_deve->execute();
             $em_aberto = (float)$stmt_deve->get_result()->fetch_assoc()['em_aberto'];
 
@@ -114,9 +126,9 @@ try {
     }
 
     // Inserir Venda Principal
-    $stmt_venda = $mysql->prepare("INSERT INTO vendas (id_cliente, usuario_id, id_caixa, valor_total, forma_pagamento, tipo_venda, status_entrega, data_venda)
-                  VALUES (?, ?, ?, ?, ?, ?, 'Pendente', NOW())");
-    $stmt_venda->bind_param("iiidss", $id_cliente, $usuario_id, $id_caixa, $total, $forma_pagto, $tipo_venda);
+    $stmt_venda = $mysql->prepare("INSERT INTO vendas (id_cliente, usuario_id, id_caixa, valor_total, forma_pagamento, tipo_venda, status_entrega, data_venda, empresa_id)
+                  VALUES (?, ?, ?, ?, ?, ?, 'Pendente', NOW(), ?)");
+    $stmt_venda->bind_param("iiidssi", $id_cliente, $usuario_id, $id_caixa, $total, $forma_pagto, $tipo_venda, $empresa_id);
 
     if (!$stmt_venda->execute()) {
         error_log("processa_venda.php - insert venda: " . $mysql->error);
@@ -132,9 +144,9 @@ try {
         $num    = $e['num'] ?? '';
         $bairro = $e['bairro'] ?? '';
 
-        $stmt_entrega = $mysql->prepare("INSERT INTO venda_entregas (id_venda, logradouro, numero, bairro, valor_frete)
-                        VALUES (?, ?, ?, ?, ?)");
-        $stmt_entrega->bind_param("isssd", $venda_id, $rua, $num, $bairro, $frete);
+        $stmt_entrega = $mysql->prepare("INSERT INTO venda_entregas (id_venda, logradouro, numero, bairro, valor_frete, empresa_id)
+                        VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt_entrega->bind_param("isssdi", $venda_id, $rua, $num, $bairro, $frete, $empresa_id);
 
         if (!$stmt_entrega->execute()) {
             throw new Exception("Erro ao salvar dados de entrega");
@@ -142,18 +154,18 @@ try {
     }
 
     // Inserir Itens e Baixar Estoque (preço e estoque já validados contra o banco acima)
-    $stmt_item = $mysql->prepare("INSERT INTO venda_itens (id_venda, id_produto, quantidade, preco_unitario, valor_total_item)
-                          VALUES (?, ?, ?, ?, ?)");
-    $stmt_baixa = $mysql->prepare("UPDATE estoque SET quantidade = quantidade - ? WHERE id = ? AND quantidade >= ?");
+    $stmt_item = $mysql->prepare("INSERT INTO venda_itens (id_venda, id_produto, quantidade, preco_unitario, valor_total_item, empresa_id)
+                          VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt_baixa = $mysql->prepare("UPDATE estoque SET quantidade = quantidade - ? WHERE id = ? AND quantidade >= ? AND empresa_id = ?");
 
     foreach ($itens_calculados as $item) {
-        $stmt_item->bind_param("iiidd", $venda_id, $item['id'], $item['qtd'], $item['preco'], $item['total']);
+        $stmt_item->bind_param("iiiddi", $venda_id, $item['id'], $item['qtd'], $item['preco'], $item['total'], $empresa_id);
         if (!$stmt_item->execute()) {
             error_log("processa_venda.php - insert item: " . $mysql->error);
             throw new Exception("Erro ao registrar item da venda. Tente novamente.");
         }
 
-        $stmt_baixa->bind_param("iii", $item['qtd'], $item['id'], $item['qtd']);
+        $stmt_baixa->bind_param("iiii", $item['qtd'], $item['id'], $item['qtd'], $empresa_id);
         if (!$stmt_baixa->execute() || $stmt_baixa->affected_rows === 0) {
             throw new Exception("Erro ao baixar estoque do produto #{$item['id']}.");
         }
@@ -170,9 +182,9 @@ try {
             }
         }
 
-        $stmt_cr = $mysql->prepare("INSERT INTO contas_receber (id_cliente, id_venda, descricao, valor, data_vencimento, status, forma_pagamento, usuario_id)
-                                     VALUES (?, ?, ?, ?, ?, 'Pendente', ?, ?)");
-        $stmt_cr->bind_param("iisdssi", $id_cliente, $venda_id, $descricao_cr, $total, $vencimento_cr, $forma_pagto, $usuario_id);
+        $stmt_cr = $mysql->prepare("INSERT INTO contas_receber (id_cliente, id_venda, descricao, valor, data_vencimento, status, forma_pagamento, usuario_id, empresa_id)
+                                     VALUES (?, ?, ?, ?, ?, 'Pendente', ?, ?, ?)");
+        $stmt_cr->bind_param("iisdssii", $id_cliente, $venda_id, $descricao_cr, $total, $vencimento_cr, $forma_pagto, $usuario_id, $empresa_id);
         if (!$stmt_cr->execute()) {
             error_log("processa_venda.php - insert contas_receber: " . $mysql->error);
             throw new Exception("Erro ao registrar a conta a receber. Tente novamente.");
@@ -180,9 +192,9 @@ try {
     } else {
         // Registrar entrada no caixa
         $obs = "Venda #$venda_id";
-        $stmt_caixa = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, forma_pagamento, valor, observacao)
-                                    VALUES (?, 'ENTRADA', 'Venda', ?, ?, ?)");
-        $stmt_caixa->bind_param("isds", $id_caixa, $forma_pagto, $total, $obs);
+        $stmt_caixa = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, forma_pagamento, valor, observacao, empresa_id)
+                                    VALUES (?, 'ENTRADA', 'Venda', ?, ?, ?, ?)");
+        $stmt_caixa->bind_param("isdsi", $id_caixa, $forma_pagto, $total, $obs, $empresa_id);
         if (!$stmt_caixa->execute()) {
             error_log("processa_venda.php - insert caixa: " . $mysql->error);
             throw new Exception("Erro ao registrar a movimentação de caixa. Tente novamente.");

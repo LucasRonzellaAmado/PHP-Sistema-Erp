@@ -1,7 +1,7 @@
 <?php
-$envPath = __DIR__ . '/../.env';
+$envPath = __DIR__ . '/../../.env';
 if (!file_exists($envPath)) {
-    die('Arquivo de configuração .env não encontrado. Copie .env.example para .env e preencha os dados de conexão.');
+    die('Arquivo de configuração .env não encontrado. Copie .env.example para .env, preencha os dados de conexão e coloque o arquivo um nível ACIMA da pasta do site (fora da raiz pública), nunca dentro dela.');
 }
 
 $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

@@ -10,6 +10,7 @@
 input, select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
 #busca_id_cliente { width: 80px; }
 #id_cliente { flex: 1; }
+#input_codigo_barras { width: 140px; }
 #select_produto { flex: 1; }
 #qtd_item { width: 80px; text-align: center; }
 

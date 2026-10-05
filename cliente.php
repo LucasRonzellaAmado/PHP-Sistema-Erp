@@ -34,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $validar_limite = intval($_POST['validar_limite'] ?? 0);
     $limite = ($validar_limite === 1) ? limparValorMoeda($_POST['limite_credito'] ?? '0') : 0;
 
-    $stmt = $mysql->prepare("INSERT INTO clientes (tipo_pessoa, nome, nome_fantasia, cpf_cnpj, email, celular, cep, endereco, numero, bairro, cidade, estado, limite_credito, validar_limite)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssssssssssdi", $tipo, $nome, $fantasia, $cpf_cnpj, $email, $celular, $cep, $endereco, $numero, $bairro, $cidade, $estado, $limite, $validar_limite);
+    $stmt = $mysql->prepare("INSERT INTO clientes (tipo_pessoa, nome, nome_fantasia, cpf_cnpj, email, celular, cep, endereco, numero, bairro, cidade, estado, limite_credito, validar_limite, empresa_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssssssssssdii", $tipo, $nome, $fantasia, $cpf_cnpj, $email, $celular, $cep, $endereco, $numero, $bairro, $cidade, $estado, $limite, $validar_limite, $_SESSION['empresa_id']);
 
     if ($stmt->execute()) {
         $novo_id = $mysql->insert_id;
@@ -45,7 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $clientes_json = [];
-$res_clientes = $mysql->query("SELECT id, nome FROM clientes ORDER BY nome ASC");
+$stmt_clientes = $mysql->prepare("SELECT id, nome FROM clientes WHERE empresa_id = ? ORDER BY nome ASC");
+$stmt_clientes->bind_param("i", $_SESSION['empresa_id']);
+$stmt_clientes->execute();
+$res_clientes = $stmt_clientes->get_result();
 while($row = $res_clientes->fetch_assoc()){
     $clientes_json[] = $row;
 }
@@ -67,7 +70,7 @@ while($row = $res_clientes->fetch_assoc()){
         <div class="card-erp card-border-primary">
             <div class="card-header-toggle" onclick="toggleCard('form_cadastro', 'icon_cad')">
                 <div class="header-title">
-                    <span>👤</span>
+                    <i class="bi bi-person-plus"></i>
                     <h2 class="title-text">Novo Cadastro de Cliente</h2>
                 </div>
                 <div class="header-controls">
@@ -156,7 +159,7 @@ while($row = $res_clientes->fetch_assoc()){
 
         <div class="card-erp">
             <div class="search-header">
-                <h3 class="m-0 color-slate">🔎 Histórico de Compras</h3>
+                <h3 class="m-0 color-slate"><i class="bi bi-search"></i> Histórico de Compras</h3>
             </div>
             <div class="p-20">
                 <div class="search-container">

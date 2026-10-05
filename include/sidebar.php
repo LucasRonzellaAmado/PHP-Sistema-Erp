@@ -9,6 +9,7 @@ $nivel = strtolower($_SESSION['nivel'] ?? '');
 
 <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
 <script>window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="assents/sidebar.css">
 
 <div class="sidebar">
@@ -17,117 +18,117 @@ $nivel = strtolower($_SESSION['nivel'] ?? '');
     </div>
 
     <nav class="menu">
+        <?php if ($nivel === 'super_admin'): ?>
+            <a class="<?= $paginaAtual == 'empresas.php' ? 'ativo' : '' ?>" href="empresas.php">
+                <i class="bi bi-buildings"></i> <span>Empresas</span>
+            </a>
+        <?php else: ?>
         <a class="<?= $paginaAtual == 'home.php' ? 'ativo' : '' ?>" href="home.php">
-            🏠 <span>Home</span>
+            <i class="bi bi-speedometer2"></i> <span>Home</span>
         </a>
 
         <?php if (in_array($nivel, ['admin', 'gerente', 'vendedor'])): ?>
             <a class="<?= $paginaAtual == 'venda.php' ? 'ativo' : '' ?>" href="venda.php">
-                🛒 <span>Venda</span>
+                <i class="bi bi-cart3"></i> <span>Venda</span>
             </a>
             <a class="<?= $paginaAtual == 'orcamento.php' ? 'ativo' : '' ?>" href="orcamento.php">
-                🧾 <span>Orçamento</span>
+                <i class="bi bi-file-earmark-text"></i> <span>Orçamento</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['admin', 'gerente', 'vendedor', 'caixa'])): ?>
             <a class="<?= $paginaAtual == 'historico-orcamento.php' ? 'ativo' : '' ?>" href="historico-orcamento.php">
-                📚 <span>Histórico Orçamento</span>
+                <i class="bi bi-clock-history"></i> <span>Histórico Orçamento</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'caixa', 'vendedor', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'historico-venda.php' ? 'ativo' : '' ?>" href="historico-venda.php">
-                📑 <span>Histórico Vendas</span>
+                <i class="bi bi-receipt"></i> <span>Histórico Vendas</span>
             </a>
             <a class="<?= $paginaAtual == 'entregas.php' ? 'ativo' : '' ?>" href="entregas.php">
-                🛵 <span>Entregas</span>
+                <i class="bi bi-truck"></i> <span>Entregas</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'caixa', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'caixa.php' ? 'ativo' : '' ?>" href="caixa.php">
-                💰 <span>Caixa</span>
+                <i class="bi bi-cash-stack"></i> <span>Caixa</span>
             </a>
         <?php endif; ?>
-        
+
         <?php if (in_array($nivel, ['gerente', 'vendedor', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'cliente.php' ? 'ativo' : '' ?>" href="cliente.php">
-                🧑 <span>Cliente</span>
+                <i class="bi bi-people"></i> <span>Cliente</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'estoque', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'estoque.php' ? 'ativo' : '' ?>" href="estoque.php">
-                📦 <span>Estoque</span>
+                <i class="bi bi-box-seam"></i> <span>Estoque</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'cadastrar_fornecedor.php' ? 'ativo' : '' ?>" href="cadastrar_fornecedor.php">
-                🚚 <span>Fornecedor</span>
+                <i class="bi bi-building"></i> <span>Fornecedor</span>
             </a>
         <?php endif; ?>
-        
+
         <?php if (in_array($nivel, ['gerente', 'estoque', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'pedido_compra.php' ? 'ativo' : '' ?>" href="pedido_compra.php">
-                📝 <span>Pedido Compra</span>
+                <i class="bi bi-clipboard-check"></i> <span>Pedido Compra</span>
             </a>
             <a class="<?= $paginaAtual == 'categorias.php' ? 'ativo' : '' ?>" href="categorias.php">
-                🏷️ <span>Categorias</span>
+                <i class="bi bi-tags"></i> <span>Categorias</span>
             </a>
             <a class="<?= $paginaAtual == 'marcas.php' ? 'ativo' : '' ?>" href="marcas.php">
-                🏭 <span>Marcas</span>
+                <i class="bi bi-bookmark"></i> <span>Marcas</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'contas_pagar.php' ? 'ativo' : '' ?>" href="contas_pagar.php">
-                💸 <span>Contas a Pagar</span>
+                <i class="bi bi-arrow-up-circle"></i> <span>Contas a Pagar</span>
             </a>
             <a class="<?= $paginaAtual == 'contas_receber.php' ? 'ativo' : '' ?>" href="contas_receber.php">
-                💵 <span>Contas a Receber</span>
+                <i class="bi bi-arrow-down-circle"></i> <span>Contas a Receber</span>
             </a>
             <a class="<?= $paginaAtual == 'relatorios.php' ? 'ativo' : '' ?>" href="relatorios.php">
-                📈 <span>Relatórios</span>
+                <i class="bi bi-graph-up"></i> <span>Relatórios</span>
             </a>
         <?php endif; ?>
 
         <?php if ($nivel === 'admin'): ?>
             <a class="<?= $paginaAtual == 'formas_pagamento.php' ? 'ativo' : '' ?>" href="formas_pagamento.php">
-                💳 <span>Formas de Pagamento</span>
+                <i class="bi bi-credit-card"></i> <span>Formas de Pagamento</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'fiscal.php' ? 'ativo' : '' ?>" href="fiscal.php">
-                🏛️ <span>Notas Fiscais</span>
+                <i class="bi bi-file-earmark-ruled"></i> <span>Notas Fiscais</span>
             </a>
         <?php endif; ?>
 
         <?php if (in_array($nivel, ['gerente', 'admin'])): ?>
             <a class="<?= $paginaAtual == 'usuarios.php' ? 'ativo' : '' ?>" href="usuarios.php">
-                🔑 <span>Usuários</span>
+                <i class="bi bi-person-badge"></i> <span>Usuários</span>
             </a>
         <?php endif; ?>
 
         <?php if ($nivel === 'admin'): ?>
             <a class="<?= $paginaAtual == 'auditoria.php' ? 'ativo' : '' ?>" href="auditoria.php">
-                🕵️ <span>Auditoria</span>
+                <i class="bi bi-shield-check"></i> <span>Auditoria</span>
             </a>
+        <?php endif; ?>
         <?php endif; ?>
     </nav>
 
     <div class="rodape">
 
-        <a class="<?= $paginaAtual == 'perfil.php' ? 'ativo' : '' ?>" href="perfil.php">
-            👤 <span>Meu Perfil</span>
-        </a>
-
-                <a href="action/logout.php" class="logout">
-
-                    🚪 <span>Sair</span>
-
+        <a href="action/logout.php" class="logout">
+            <i class="bi bi-box-arrow-right"></i> <span>Sair</span>
         </a>
     </div>
 </div>

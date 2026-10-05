@@ -2,6 +2,11 @@
 require_once 'include/auth.php';
 require_once 'include/conexao.php';
 
+if (!isset($_SESSION['nivel']) || !in_array($_SESSION['nivel'], ['gerente', 'vendedor', 'caixa', 'admin'])) {
+    header("Location: home.php?erro=sem_permissao");
+    exit;
+}
+
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id <= 0) exit("Orçamento inválido");
 
@@ -9,15 +14,15 @@ $stmt_orc = $mysql->prepare("SELECT o.*, c.nome as cliente_nome, c.telefone, c.e
     FROM orcamentos o
     LEFT JOIN clientes c ON o.id_cliente = c.id
     LEFT JOIN usuarios u ON o.usuario_id = u.id
-    WHERE o.id = ?");
-$stmt_orc->bind_param("i", $id);
+    WHERE o.id = ? AND o.empresa_id = ?");
+$stmt_orc->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_orc->execute();
 $orc = $stmt_orc->get_result()->fetch_assoc();
 
 if (!$orc) exit("Orçamento não encontrado");
 
-$stmt_itens = $mysql->prepare("SELECT oi.*, e.nome FROM orcamento_itens oi LEFT JOIN estoque e ON oi.id_produto = e.id WHERE oi.id_orcamento = ?");
-$stmt_itens->bind_param("i", $id);
+$stmt_itens = $mysql->prepare("SELECT oi.*, e.nome FROM orcamento_itens oi LEFT JOIN estoque e ON oi.id_produto = e.id WHERE oi.id_orcamento = ? AND oi.empresa_id = ?");
+$stmt_itens->bind_param("ii", $id, $_SESSION['empresa_id']);
 $stmt_itens->execute();
 $itens = $stmt_itens->get_result();
 ?>
@@ -47,9 +52,9 @@ $itens = $stmt_itens->get_result();
         <strong>Cliente:</strong> <?= htmlspecialchars($orc['cliente_nome'] ?? 'Consumidor Avulso') ?><br>
         <strong>Contato:</strong> <?= htmlspecialchars($orc['email'] ?? '') ?> <?= htmlspecialchars($orc['telefone'] ?? '') ?><br>
         <strong>Vendedor:</strong> <?= htmlspecialchars($orc['vendedor_nome'] ?? 'Sistema') ?><br>
-        <strong>Emissão:</strong> <?= date('d/m/Y', strtotime($orc['data_emissao'])) ?> &nbsp;
-        <strong>Validade:</strong> <?= date('d/m/Y', strtotime($orc['validade'])) ?><br>
-        <strong>Status:</strong> <?= htmlspecialchars($orc['status']) ?>
+        <strong>Emissão:</strong> <?= $orc['data_emissao'] ? date('d/m/Y', strtotime($orc['data_emissao'])) : '---' ?> &nbsp;
+        <strong>Validade:</strong> <?= $orc['validade'] ? date('d/m/Y', strtotime($orc['validade'])) : '---' ?><br>
+        <strong>Status:</strong> <?= htmlspecialchars($orc['status'] ?? '') ?>
     </p>
 
     <table>

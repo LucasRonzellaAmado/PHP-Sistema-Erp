@@ -39,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $hash = password_hash($senha, PASSWORD_DEFAULT);
-        $stmt = $mysql->prepare("INSERT INTO usuarios (usuario, senha, nome, nivel, status) VALUES (?, ?, ?, ?, 1)");
-        $stmt->bind_param("ssss", $usuario_login, $hash, $nome, $nivel_novo);
+        $stmt = $mysql->prepare("INSERT INTO usuarios (usuario, senha, nome, nivel, status, empresa_id) VALUES (?, ?, ?, ?, 1, ?)");
+        $stmt->bind_param("ssssi", $usuario_login, $hash, $nome, $nivel_novo, $_SESSION['empresa_id']);
 
         if ($stmt->execute()) {
             registrar_log($mysql, 'criar_usuario', 'usuarios', $mysql->insert_id, "Login: $usuario_login, nível: $nivel_novo");
@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include 'include/sidebar.php'; ?>
     <div class="conteudo">
         <div class="header-edit">
-            <h2>➕ Novo Usuário</h2>
-            <a href="usuarios.php" class="btn-voltar">⬅ Voltar</a>
+            <h2><i class="bi bi-person-plus"></i> Novo Usuário</h2>
+            <a href="usuarios.php" class="btn-voltar"><i class="bi bi-arrow-left"></i> Voltar</a>
         </div>
 
         <div class="card-erp" style="max-width:600px;">

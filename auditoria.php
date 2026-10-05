@@ -13,9 +13,9 @@ $pagina = max(1, intval($_GET['pagina'] ?? 1));
 $por_pagina = 50;
 $offset = ($pagina - 1) * $por_pagina;
 
-$where = [];
-$params = [];
-$types = '';
+$where = ['empresa_id = ?'];
+$params = [$_SESSION['empresa_id']];
+$types = 'i';
 
 if ($acao_filtro !== '') {
     $where[] = "acao = ?";
@@ -45,8 +45,8 @@ $stmt->bind_param($types . 'ii', ...$params_com_paginacao);
 $stmt->execute();
 $res = $stmt->get_result();
 
-$res_acoes = $mysql->query("SELECT DISTINCT acao FROM log_auditoria ORDER BY acao ASC");
-$res_usuarios = $mysql->query("SELECT id, nome FROM usuarios ORDER BY nome ASC");
+$res_acoes = $mysql->query("SELECT DISTINCT acao FROM log_auditoria WHERE empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY acao ASC");
+$res_usuarios = $mysql->query("SELECT id, nome FROM usuarios WHERE empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY nome ASC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -63,7 +63,7 @@ $res_usuarios = $mysql->query("SELECT id, nome FROM usuarios ORDER BY nome ASC")
     <div class="conteudo">
         <div class="header-estoque">
             <div class="title-group">
-                <h1>🕵️ Log de Auditoria</h1>
+                <h1><i class="bi bi-shield-check"></i> Log de Auditoria</h1>
                 <p>Registro de ações sensíveis: login, vendas, financeiro, cadastros</p>
             </div>
         </div>
@@ -111,10 +111,10 @@ $res_usuarios = $mysql->query("SELECT id, nome FROM usuarios ORDER BY nome ASC")
                 <small>Página <?= $pagina ?> de <?= $total_paginas ?> (<?= $total_registros ?> registros)</small>
                 <div style="display:flex; gap:10px;">
                     <?php if ($pagina > 1): ?>
-                        <a href="?pagina=<?= $pagina - 1 ?>&acao=<?= urlencode($acao_filtro) ?>&usuario_id=<?= $usuario_filtro ?>" class="btn-voltar">⬅ Anterior</a>
+                        <a href="?pagina=<?= $pagina - 1 ?>&acao=<?= urlencode($acao_filtro) ?>&usuario_id=<?= $usuario_filtro ?>" class="btn-voltar"><i class="bi bi-arrow-left"></i> Anterior</a>
                     <?php endif; ?>
                     <?php if ($pagina < $total_paginas): ?>
-                        <a href="?pagina=<?= $pagina + 1 ?>&acao=<?= urlencode($acao_filtro) ?>&usuario_id=<?= $usuario_filtro ?>" class="btn-voltar">Próxima ➡</a>
+                        <a href="?pagina=<?= $pagina + 1 ?>&acao=<?= urlencode($acao_filtro) ?>&usuario_id=<?= $usuario_filtro ?>" class="btn-voltar">Próxima <i class="bi bi-arrow-right"></i></a>
                     <?php endif; ?>
                 </div>
             </div>

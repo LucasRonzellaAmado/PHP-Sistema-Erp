@@ -18,7 +18,7 @@ function limparValor($valor) {
 $sql_caixa = "SELECT c.*, u.nome as nome_abertura 
               FROM controle_caixas c 
               LEFT JOIN usuarios u ON c.usuario_id = u.id 
-              WHERE c.status = 'Aberto' 
+              WHERE c.status = 'Aberto' AND c.empresa_id = " . (int)$_SESSION['empresa_id'] . " 
               LIMIT 1";
 
 $res_caixa = $mysql->query($sql_caixa);
@@ -30,8 +30,8 @@ if (isset($_POST['abrir_caixa'])) {
     $valor_inicial = limparValor($_POST['valor_inicial']);
     $data_abertura = date('Y-m-d H:i:s');
 
-    $stmt = $mysql->prepare("INSERT INTO controle_caixas (usuario_id, valor_inicial, status, data_abertura) VALUES (?, ?, 'Aberto', ?)");
-    $stmt->bind_param("ids", $usuario_id, $valor_inicial, $data_abertura);
+    $stmt = $mysql->prepare("INSERT INTO controle_caixas (usuario_id, valor_inicial, status, data_abertura, empresa_id) VALUES (?, ?, 'Aberto', ?, ?)");
+    $stmt->bind_param("idsi", $usuario_id, $valor_inicial, $data_abertura, $_SESSION['empresa_id']);
     $stmt->execute();
     registrar_log($mysql, 'abrir_caixa', 'controle_caixas', $mysql->insert_id, "Valor inicial: R$ " . number_format($valor_inicial, 2, ',', '.'));
 
@@ -48,9 +48,9 @@ if (isset($_POST['movimentar']) && $caixa_aberto) {
     $valor = limparValor($_POST['valor_mov']);
     $obs = $_POST['obs_mov'] ?? '';
 
-    $stmt_mov = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, valor, observacao, forma_pagamento)
-                VALUES (?, ?, ?, ?, ?, 'Dinheiro')");
-    $stmt_mov->bind_param("issds", $caixa_id, $tipo, $origem, $valor, $obs);
+    $stmt_mov = $mysql->prepare("INSERT INTO movimentacoes_caixa (caixa_id, tipo, origem, valor, observacao, forma_pagamento, empresa_id)
+                VALUES (?, ?, ?, ?, ?, 'Dinheiro', ?)");
+    $stmt_mov->bind_param("issdsi", $caixa_id, $tipo, $origem, $valor, $obs, $_SESSION['empresa_id']);
 
     if ($stmt_mov->execute()) {
         registrar_log($mysql, 'movimentacao_caixa_manual', 'movimentacoes_caixa', $mysql->insert_id, "$tipo: R$ " . number_format($valor, 2, ',', '.') . " - $obs");
@@ -62,7 +62,7 @@ if (isset($_POST['movimentar']) && $caixa_aberto) {
 $saldo_atual = 0;
 if ($caixa_aberto) {
     $cid = $caixa_aberto['id'];
-    $res_soma = $mysql->query("SELECT SUM(CASE WHEN tipo = 'ENTRADA' THEN valor ELSE -valor END) as saldo FROM movimentacoes_caixa WHERE caixa_id = $cid");
+    $res_soma = $mysql->query("SELECT SUM(CASE WHEN tipo = 'ENTRADA' THEN valor ELSE -valor END) as saldo FROM movimentacoes_caixa WHERE caixa_id = $cid AND empresa_id = " . (int)$_SESSION['empresa_id']);
     $soma = $res_soma->fetch_assoc();
     $saldo_atual = (float)$caixa_aberto['valor_inicial'] + (float)($soma['saldo'] ?? 0);
 }
@@ -80,10 +80,10 @@ if ($caixa_aberto) {
     <?php include 'include/sidebar.php'; ?>
     <div class="conteudo" style="flex:1; padding: 25px;">
         <div class="header-caixa">
-            <h2 style="margin:0;">💰 Gestão de Caixa PDV</h2>
+            <h2 style="margin:0;"><i class="bi bi-cash-stack"></i> Gestão de Caixa PDV</h2>
             <?php if ($caixa_aberto): ?>
                 <div class="badge-operador">
-                    👤 Aberto por: <?= htmlspecialchars($caixa_aberto['nome_abertura']) ?>
+                    <i class="bi bi-person"></i> Aberto por: <?= htmlspecialchars($caixa_aberto['nome_abertura']) ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -120,7 +120,7 @@ if ($caixa_aberto) {
             <div class="col">
                 <div class="card-erp">
                     <label>CAIXA Nº: <?= $caixa_aberto['id'] ?> | <span class="status-aberto">● ABERTO</span></label>
-                    <p class="data-info">Iniciado em: <?= date('d/m/Y H:i', strtotime($caixa_aberto['data_abertura'])) ?></p>
+                    <p class="data-info">Iniciado em: <?= $caixa_aberto['data_abertura'] ? date('d/m/Y H:i', strtotime($caixa_aberto['data_abertura'])) : '---' ?></p>
                     <button class="btn-warning" onclick="location.href='fechar_caixa.php'" style="width: 100%;">IR PARA FECHAMENTO</button>
                 </div>
             </div>
@@ -166,15 +166,15 @@ if ($caixa_aberto) {
                 </thead>
                 <tbody>
                     <?php
-                    $res_logs = $mysql->query("SELECT * FROM movimentacoes_caixa WHERE caixa_id = {$caixa_aberto['id']} ORDER BY id DESC LIMIT 5");
+                    $res_logs = $mysql->query("SELECT * FROM movimentacoes_caixa WHERE caixa_id = {$caixa_aberto['id']} AND empresa_id = " . (int)$_SESSION['empresa_id'] . " ORDER BY id DESC LIMIT 5");
                     while($m = $res_logs->fetch_assoc()):
                         $cor = ($m['tipo'] == 'ENTRADA') ? '#10b981' : '#ef4444';
                     ?>
                     <tr>
-                        <td><?= date('H:i', strtotime($m['data_hora'])) ?></td>
+                        <td><?= $m['data_hora'] ? date('H:i', strtotime($m['data_hora'])) : '---' ?></td>
                         <td style="color: <?= $cor ?>; font-weight: bold;"><?= $m['tipo'] ?></td>
                         <td style="font-weight: bold;">R$ <?= number_format($m['valor'], 2, ',', '.') ?></td>
-                        <td><small><?= htmlspecialchars($m['observacao']) ?></small></td>
+                        <td><small><?= htmlspecialchars($m['observacao'] ?? '') ?></small></td>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
