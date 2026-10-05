@@ -121,6 +121,17 @@ Nível de acesso de cada página é sempre checado no próprio arquivo PHP (`$_S
 
 ---
 
+## Deploy em produção
+
+1. Suba para o servidor **somente o conteúdo desta pasta** (sem `.git`, sem `*.sql`, sem `*.bak`). É a raiz pública do site.
+2. Coloque o `.env` **um nível acima** da raiz pública (ex.: raiz em `/var/www/erp/`, `.env` em `/var/www/.env`). Sem ele o sistema não conecta.
+3. No banco de produção, rode em ordem `migrations/000_RODAR_TUDO.sql` e depois `migrations/007_multi_tenant.sql`.
+4. Troque todas as senhas de teste antes de liberar o acesso.
+5. No `php.ini` do servidor use `display_errors = Off` e `log_errors = On`, para o usuário não ver mensagens de erro do PHP.
+6. Use HTTPS. Com HTTPS o cookie de sessão já sai com a flag `Secure`.
+
+---
+
 ## Limitações conhecidas
 
 Este sistema **não é** um substituto para um ERP fiscal/contábil completo. Ficam fora do escopo:
